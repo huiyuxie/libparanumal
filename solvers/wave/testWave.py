@@ -26,7 +26,11 @@
 #
 #####################################################################################
 
-from test import *
+import os
+import sys
+
+from test import waveBin, device
+from test import setting_t, test
 
 dataTime2D = "./data/waveQuadraticTime2D.h"
 dataTime3D = "./data/waveQuadraticTime3D.h"
