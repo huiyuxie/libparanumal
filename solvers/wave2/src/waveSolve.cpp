@@ -28,7 +28,17 @@ SOFTWARE.
 #include "timer.hpp"
 #include "wave.hpp"
 
-// Test version of another wave solve
+void diagnostic(dlong N, mesh_t &mesh, platform_t &platform,
+                deviceMemory<dfloat> &o_x, const char *message) {
+  dfloat normx = platform.linAlg().norm2(N, o_x, mesh.comm);
+
+  std::cout << std::scientific << std::setw(10) << std::endl;
+  std::cout << "norm(" << message << ")=" << normx << std::endl;
+}
+
+// wave solver2
+// remove the functionality 1."ENABLE FLUX SOURCE" = "TRUE"
+// and 2. "SOLVER MODE" = "WAVEHOLTZ" for now
 void wave_t::Solve(deviceMemory<dfloat> &o_rDL, deviceMemory<dfloat> &o_rPL,
                    deviceMemory<dfloat> &o_rFL) {
   std::cout << "iostep = " << iostep << std::endl;
@@ -41,7 +51,7 @@ void wave_t::Solve(deviceMemory<dfloat> &o_rDL, deviceMemory<dfloat> &o_rPL,
 
   dlong cumIter = 0;
 
-  for (int tstep = 0; tstep < Nsteps; ++tstep) {  // do adaptive later
+  for (int tstep = 0; tstep < Nsteps; ++tstep) { // do adaptive later
     int iter = 0;
 
     dfloat t = tstep * dt;
@@ -68,10 +78,10 @@ void wave_t::Solve(deviceMemory<dfloat> &o_rDL, deviceMemory<dfloat> &o_rPL,
                         mesh.o_x, mesh.o_y, mesh.o_z, o_WJ, o_MM, o_DrhsL);
 
       // record local RHS
-      if (esc) esc->setLocalRHS(o_DrhsL);
+      if (esc)
+        esc->setLocalRHS(o_DrhsL);
 
-      diagnostic(mesh.Nelements * mesh.Np, mesh, platform, o_DrhsL,
-                 "DrhsL");  // need this?
+      diagnostic(mesh.Nelements * mesh.Np, mesh, platform, o_DrhsL, "DrhsL");
 
       // gather rhs to globalDofs if c0
       if (disc_c0) {
@@ -109,7 +119,7 @@ void wave_t::Solve(deviceMemory<dfloat> &o_rDL, deviceMemory<dfloat> &o_rPL,
                               lambdaSolve, Nstages, stage, scF, o_alpha,
                               o_alphatilde, o_gammatilde, o_WJ, o_MM, o_FL,
                               o_DtildeL, o_DhatL, o_PhatL,
-                              o_DrhsL);  // remember 1-index
+                              o_DrhsL); // remember 1-index
     }
 
     // KERNEL 4: FINALIZE
@@ -136,7 +146,7 @@ void wave_t::Solve(deviceMemory<dfloat> &o_rDL, deviceMemory<dfloat> &o_rPL,
     elliptic.lambda = lambdaSolve;
 
     diagnostic(mesh.Nelements * mesh.Np, mesh, platform, o_scratch2L,
-               "M*OP*scratch1L");  // need this?
+               "M*OP*scratch1L");
 
     dfloat sigmaF = 0, omegaF = 0, lambdaF = 1., scaleF = -1. / dt;
     waveForcingKernel(mesh.Nelements, Nstages, Nstages + 1, t, dt, o_alpha,
@@ -166,10 +176,9 @@ void wave_t::Solve(deviceMemory<dfloat> &o_rDL, deviceMemory<dfloat> &o_rPL,
     dfloat normD =
         platform.linAlg().norm2(mesh.Np * mesh.Nelements, o_rDL, mesh.comm);
 
-    printf(
-        "====> time=%g, dt=%g, step=%d, sum(iterD)=%d, ave(iterD)=%3.2f, "
-        "norm(P,l2) =%3.2e, norm(D,l2) =%3.2e\n",
-        t + dt, dt, tstep, iter, iter / (double)(Nstages - 1), normP, normD);
+    printf("====> time=%g, dt=%g, step=%d, sum(iterD)=%d, ave(iterD)=%3.2f, "
+           "norm(P,l2) =%3.2e, norm(D,l2) =%3.2e\n",
+           t + dt, dt, tstep, iter, iter / (double)(Nstages - 1), normP, normD);
 
     double elapsedTime = ElapsedTime(starts, ends);
 
