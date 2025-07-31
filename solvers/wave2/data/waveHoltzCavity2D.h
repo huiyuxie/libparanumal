@@ -24,38 +24,35 @@ SOFTWARE.
 
 */
 
-#define ellipticForcing2D(x, y, lambda, f) \
-  { \
-  f = 0.;                                     \
-  }
-
+#define ellipticForcing2D(x, y, lambda, f)                                     \
+  { f = 0.; }
 
 /* Homogeneous Dirichlet boundary condition   */
-#define ellipticDirichletCondition2D(x,y,nx,ny,uM,uxM,uyM,uB,uxB,uyB)  \
-  {              \
-    uB  = 0.f;   \
-    uxB = uxM;   \
-    uyB = uyM;   \
+#define ellipticDirichletCondition2D(x, y, nx, ny, uM, uxM, uyM, uB, uxB, uyB) \
+  {                                                                            \
+    uB = 0.f;                                                                  \
+    uxB = uxM;                                                                 \
+    uyB = uyM;                                                                 \
   }
 
 /* Homogeneous Neumann boundary condition   */
-#define ellipticNeumannCondition2D(x,y,nx,ny,uM,uxM,uyM,uB,uxB,uyB)  \
-  {              \
-    uB  = uM;    \
-    uxB = 0.f;   \
-    uyB = 0.f;   \
+#define ellipticNeumannCondition2D(x, y, nx, ny, uM, uxM, uyM, uB, uxB, uyB)   \
+  {                                                                            \
+    uB = uM;                                                                   \
+    uxB = 0.f;                                                                 \
+    uyB = 0.f;                                                                 \
   }
 
-#define waveForcingFunction2D(x, y, sigma, omega, f)                   \
-  {                                                                   \
-    /* taken from https://arxiv.org/pdf/1910.10148.pdf (4.2.1) */     \
-    dfloat tmp = -sigma*((xn-0.01)*(xn-0.01)+(yn-0.015)*(yn-0.015));  \
-    f = -omega*omega*exp(tmp);                                       \
+#define waveForcingFunction2D(x, y, sigma, omega, f)                           \
+  {                                                                            \
+    /* taken from https://arxiv.org/pdf/1910.10148.pdf (4.2.1) */              \
+    dfloat tmp =                                                               \
+        -sigma * ((xn - 0.01) * (xn - 0.01) + (yn - 0.015) * (yn - 0.015));    \
+    f = -omega * omega * exp(tmp);                                             \
   }
 
-#define waveInitialConditionsFunction2D(t, x, y, d, p)  \
-  {                                                     \
-    d = 0.;                                             \
-    p = 0.;                                             \
+#define waveInitialConditionsFunction2D(t, x, y, d, p)                         \
+  {                                                                            \
+    d = 0.;                                                                    \
+    p = 0.;                                                                    \
   }
-

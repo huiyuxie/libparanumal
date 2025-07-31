@@ -24,38 +24,32 @@ SOFTWARE.
 
 */
 
-#define ellipticForcing2D(x, y, lambda, f) \
-  { \
-  f = 0.;                                     \
-  }
-
+#define ellipticForcing2D(x, y, lambda, f)                                     \
+  { f = 0.; }
 
 /* Homogeneous Dirichlet boundary condition   */
-#define ellipticDirichletCondition2D(x,y,nx,ny,uM,uxM,uyM,uB,uxB,uyB)  \
-  {              \
-    uB  = 0.f;   \
-    uxB = uxM;   \
-    uyB = uyM;   \
+#define ellipticDirichletCondition2D(x, y, nx, ny, uM, uxM, uyM, uB, uxB, uyB) \
+  {                                                                            \
+    uB = 0.f;                                                                  \
+    uxB = uxM;                                                                 \
+    uyB = uyM;                                                                 \
   }
 
 /* Homogeneous Neumann boundary condition   */
-#define ellipticNeumannCondition2D(x,y,nx,ny,uM,uxM,uyM,uB,uxB,uyB)  \
-  {              \
-    uB  = uM;    \
-    uxB = 0.f;   \
-    uyB = 0.f;   \
+#define ellipticNeumannCondition2D(x, y, nx, ny, uM, uxM, uyM, uB, uxB, uyB)   \
+  {                                                                            \
+    uB = uM;                                                                   \
+    uxB = 0.f;                                                                 \
+    uyB = 0.f;                                                                 \
   }
 
-#define waveForcingFunction2D(x, y, sigma, omega, f) \
-  {                                            \
-    f = 0.;                   \
+#define waveForcingFunction2D(x, y, sigma, omega, f)                           \
+  { f = 0.; }
+
+#define waveInitialConditionsFunction2D(t, x, y, d, p)                         \
+  {                                                                            \
+    dfloat m = 2;                                                              \
+    d = -m * M_PI * sqrt(2.) * sin(m * M_PI * x) * sin(m * M_PI * y) *         \
+        sin(m * M_PI * t * sqrt(2.));                                          \
+    p = sin(m * M_PI * x) * sin(m * M_PI * y) * cos(m * M_PI * t * sqrt(2.));  \
   }
-
-
-#define waveInitialConditionsFunction2D(t, x, y, d, p)                  \
-  {                                                                     \
-    dfloat m = 2;                                                      \
-    d = -m*M_PI*sqrt(2.)*sin(m*M_PI*x)*sin(m*M_PI*y)*sin(m*M_PI*t*sqrt(2.)); \
-    p =                  sin(m*M_PI*x)*sin(m*M_PI*y)*cos(m*M_PI*t*sqrt(2.)); \
-  }
-

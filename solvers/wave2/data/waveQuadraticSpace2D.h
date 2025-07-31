@@ -25,42 +25,40 @@ SOFTWARE.
 
 */
 
-#define ellipticForcing2D(x, y, lambda, f) \
-  { \
-  f = 0.;                                     \
-  }
-
+#define ellipticForcing2D(x, y, lambda, f)                                     \
+  { f = 0.; }
 
 /* Homogeneous Dirichlet boundary condition   */
-#define ellipticDirichletCondition2D(x,y,nx,ny,uM,uxM,uyM,uB,uxB,uyB)  \
-  {              \
-    uB  = 0.f;   \
-    uxB = uxM;   \
-    uyB = uyM;   \
+#define ellipticDirichletCondition2D(x, y, nx, ny, uM, uxM, uyM, uB, uxB, uyB) \
+  {                                                                            \
+    uB = 0.f;                                                                  \
+    uxB = uxM;                                                                 \
+    uyB = uyM;                                                                 \
   }
 
 /* Homogeneous Neumann boundary condition   */
-#define ellipticNeumannCondition2D(x,y,nx,ny,uM,uxM,uyM,uB,uxB,uyB)  \
-  {              \
-    uB  = uM;    \
-    uxB = 0.f;   \
-    uyB = 0.f;   \
+#define ellipticNeumannCondition2D(x, y, nx, ny, uM, uxM, uyM, uB, uxB, uyB)   \
+  {                                                                            \
+    uB = uM;                                                                   \
+    uxB = 0.f;                                                                 \
+    uyB = 0.f;                                                                 \
   }
 
-#define waveForcingFunction2D(t, x, y, sigma, omega, f)  \
-  {                                                      \
-    f = -2.*M_PI*M_PI*0.25*(1.f-x*x)*(1.f-y*y)*sin(sqrt(2.)*M_PI*t); \
-    f -= 0.25*((1.f-x*x)*(-2.f) + (-2.f)*(1.f-y*y))*sin(sqrt(2.)*M_PI*t); \
+#define waveForcingFunction2D(t, x, y, sigma, omega, f)                        \
+  {                                                                            \
+    f = -2. * M_PI * M_PI * 0.25 * (1.f - x * x) * (1.f - y * y) *             \
+        sin(sqrt(2.) * M_PI * t);                                              \
+    f -= 0.25 * ((1.f - x * x) * (-2.f) + (-2.f) * (1.f - y * y)) *            \
+         sin(sqrt(2.) * M_PI * t);                                             \
   }
 
-
-#define waveInitialConditionsFunction2D(t, x, y, d, p)  \
-  {                                                     \
-    d = 0.25*(1.f-x*x)*(1.f-y*y)*cos(sqrt(2.)*M_PI*t)*sqrt(2.)*M_PI; \
-    p = 0.25*(1.f-x*x)*(1.f-y*y)*sin(sqrt(2.)*M_PI*t); \
+#define waveInitialConditionsFunction2D(t, x, y, d, p)                         \
+  {                                                                            \
+    d = 0.25 * (1.f - x * x) * (1.f - y * y) * cos(sqrt(2.) * M_PI * t) *      \
+        sqrt(2.) * M_PI;                                                       \
+    p = 0.25 * (1.f - x * x) * (1.f - y * y) * sin(sqrt(2.) * M_PI * t);       \
   }
 
-#define waveSurfaceSource2D(patch, tin, xsource, ysource, fsource, xn, yn, p, dpdx, dpdy, d, dddx, dddy) \
-  {                                                                     \
-  }
-    
+#define waveSurfaceSource2D(patch, tin, xsource, ysource, fsource, xn, yn, p,  \
+                            dpdx, dpdy, d, dddx, dddy)                         \
+  {}

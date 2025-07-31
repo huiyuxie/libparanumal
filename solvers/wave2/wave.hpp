@@ -175,7 +175,7 @@ public:
   void Solve(deviceMemory<dfloat> &_o_DL, deviceMemory<dfloat> &_o_PL,
              deviceMemory<dfloat> &_o_FL);
 
-  // skip v2 for now 
+  // skip v2 for now
   //  void SolveV2(deviceMemory<dfloat> &_o_DL,
   //               deviceMemory<dfloat> &_o_PL,
   //               deviceMemory<dfloat> &_o_FL);
