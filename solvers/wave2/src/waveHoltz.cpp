@@ -3,25 +3,30 @@
 
 The MIT License (MIT)
 
-Copyright (c) 2017-2022 Tim Warburton, Noel Chalmers, Jesse Chan, Ali Karakus
+Copyright (c) 2017-2022 Tim Warburton, Noel Chalmers, Jesse
+Chan, Ali Karakus
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person
+obtaining a copy of this software and associated
+documentation files (the "Software"), to deal in the
+Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute,
+sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall
+be included in all copies or substantial portions of the
+Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
 
@@ -44,8 +49,9 @@ void wave_t::waveHoltz(deviceMemory<dfloat>& o_qL) {
       Nall, Nhalo, platform, elliptic.settings, comm);
 
   // configure linear solver to use zero initial guess
-  waveHoltzLinearSolver.SetupInitialGuess<InitialGuess::Last<dfloat>>(
-      Nall, platform, elliptic.settings, comm);
+  waveHoltzLinearSolver
+      .SetupInitialGuess<InitialGuess::Last<dfloat>>(
+          Nall, platform, elliptic.settings, comm);
 
   // compute RHS (this will work for IPDG for now)
   deviceMemory<dfloat> o_bL = platform.malloc<dfloat>(Nall);
@@ -55,11 +61,13 @@ void wave_t::waveHoltz(deviceMemory<dfloat>& o_qL) {
   platform.linAlg().set(Nall, (dfloat)0, o_PL);
   platform.linAlg().set(Nall, (dfloat)0, o_filtPL);
 
-  // solve homogeneous initial conditions with forcing to obtain RHS
+  // solve homogeneous initial conditions with forcing to
+  // obtain RHS
   //  Nsteps *=20;
   Solve(o_DL, o_PL, o_FL);
   //  Nsteps /=20;
-  std::cout << "**************** DONE INITIAL FORCING PHASE *******************"
+  std::cout << "**************** DONE INITIAL FORCING "
+               "PHASE *******************"
             << std::endl;
 
   // this becomes the RHS
@@ -67,18 +75,20 @@ void wave_t::waveHoltz(deviceMemory<dfloat>& o_qL) {
 
   stoppingCriteria_t<dfloat>* waveHoltzStoppingCriteria =
       new stoppingCriteria_t<dfloat>();
-  int iterD = waveHoltzLinearSolver.Solve(*this,
-                                          waveHoltzPrecon,
-                                          o_qL,
-                                          o_bL,
-                                          tol,
-                                          maxIter,
-                                          verbose,
-                                          waveHoltzStoppingCriteria);
+  int iterD = waveHoltzLinearSolver.Solve(
+      *this,
+      waveHoltzPrecon,
+      o_qL,
+      o_bL,
+      tol,
+      maxIter,
+      verbose,
+      waveHoltzStoppingCriteria);
 
   std::cout << " WOWSA " << std::endl;
 
-  //  if (settings.compareSetting("OUTPUT TO FILE","TRUE")) {
+  //  if (settings.compareSetting("OUTPUT TO FILE","TRUE"))
+  //  {
   {
     // copy data back to host
     o_qL.copyTo(PL);
