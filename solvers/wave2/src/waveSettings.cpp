@@ -27,14 +27,19 @@ SOFTWARE.
 #include "wave.hpp"
 
 // settings for wave solver
-waveSettings_t::waveSettings_t(comm_t &_comm) : settings_t(_comm) {
-  newSetting("DATA FILE", "data/waveHomogeneous2D.h",
+waveSettings_t::waveSettings_t(comm_t& _comm) : settings_t(_comm) {
+  newSetting("DATA FILE",
+             "data/waveHomogeneous2D.h",
              "Boundary and Initial conditions header");
 
-  newSetting("SOLVER MODE", "TIMEDOMAIN", "Solver to use",
+  newSetting("SOLVER MODE",
+             "TIMEDOMAIN",
+             "Solver to use",
              {"TIMEDOMAIN", "WAVEHOLTZ"});
 
-  newSetting("TIME INTEGRATOR", "ESDIRK6(5)9L{2}SA", "Time integration method",
+  newSetting("TIME INTEGRATOR",
+             "ESDIRK6(5)9L{2}SA",
+             "Time integration method",
              {"TRBDF2-ESDIRK",          "TRX2-ESDIRK",
               "ARK3(2)4L{2}SA-ESDIRK",  "Kvaerno(4,2,3)-ESDIRK",
               "ESDIRK3(2)4L{2}SA",      "ESDIRK3(2)5L{2}SA",
@@ -58,19 +63,23 @@ waveSettings_t::waveSettings_t(comm_t &_comm) : settings_t(_comm) {
 
   newSetting("OUTPUT INTERVAL", ".1", "Time between printing output data");
 
-  newSetting("OUTPUT STEP", "100",
+  newSetting("OUTPUT STEP",
+             "100",
              "Number of time steps between printing output data");
 
-  newSetting("OUTPUT TO FILE", "TRUE", "Flag for writing fields to VTU files",
+  newSetting("OUTPUT TO FILE",
+             "TRUE",
+             "Flag for writing fields to VTU files",
              {"TRUE", "FALSE"});
 
-  newSetting("OUTPUT ERROR INTERVAL", "0",
+  newSetting("OUTPUT ERROR INTERVAL",
+             "0",
              "Number of time steps between printing output error");
 
   newSetting("OUTPUT FILE NAME", "wave");
 
-  newSetting("VERBOSE", "TRUE", "Verbose output setings for wave",
-             {"TRUE", "FALSE"});
+  newSetting(
+      "VERBOSE", "TRUE", "Verbose output setings for wave", {"TRUE", "FALSE"});
 
   newSetting("FLUX SOURCE X", "0.0", "x-coordinate of flux point source");
 
@@ -80,10 +89,13 @@ waveSettings_t::waveSettings_t(comm_t &_comm) : settings_t(_comm) {
 
   newSetting("FLUX SOURCE PATCH RADIUS", "1.0", "Radius of flux point patch");
 
-  newSetting("FLUX SOURCE FREQUENCY", "1.0",
+  newSetting("FLUX SOURCE FREQUENCY",
+             "1.0",
              "Frequency of flux point source Ricker pulse");
 
-  newSetting("ENABLE FLUX SOURCE", "FALSE", "Switch to enable flux source",
+  newSetting("ENABLE FLUX SOURCE",
+             "FALSE",
+             "Switch to enable flux source",
              {"TRUE", "FALSE"});
 
   ellipticAddSettings(*this, "ELLIPTIC ");
@@ -92,7 +104,7 @@ waveSettings_t::waveSettings_t(comm_t &_comm) : settings_t(_comm) {
 }
 
 void waveSettings_t::report() {
-  if (comm.rank() == 0) {
+  if(comm.rank() == 0) {
     std::cout << "WAVE Settings:\n\n";
 
     reportSetting("DATA FILE");
@@ -113,15 +125,15 @@ void waveSettings_t::report() {
     reportSetting("ELLIPTIC INITIAL GUESS HISTORY SPACE DIMENSION");
     reportSetting("ELLIPTIC PRECONDITIONER");
 
-    if (compareSetting("ELLIPTIC PRECONDITIONER", "MULTIGRID")) {
+    if(compareSetting("ELLIPTIC PRECONDITIONER", "MULTIGRID")) {
       reportSetting("ELLIPTIC MULTIGRID COARSENING");
       reportSetting("ELLIPTIC MULTIGRID SMOOTHER");
-      if (compareSetting("ELLIPTIC MULTIGRID SMOOTHER", "CHEBYSHEV"))
+      if(compareSetting("ELLIPTIC MULTIGRID SMOOTHER", "CHEBYSHEV"))
         reportSetting("ELLIPTIC MULTIGRID CHEBYSHEV DEGREE");
     }
 
-    if (compareSetting("ELLIPTIC PRECONDITIONER", "MULTIGRID") ||
-        compareSetting("ELLIPTIC PRECONDITIONER", "PARALMOND")) {
+    if(compareSetting("ELLIPTIC PRECONDITIONER", "MULTIGRID") ||
+       compareSetting("ELLIPTIC PRECONDITIONER", "PARALMOND")) {
       reportSetting("ELLIPTIC PARALMOND CYCLE");
       reportSetting("ELLIPTIC PARALMOND SMOOTHER");
       reportSetting("ELLIPTIC PARALMOND CHEBYSHEV DEGREE");
@@ -129,26 +141,24 @@ void waveSettings_t::report() {
   }
 }
 
-void waveSettings_t::parseFromFile(platformSettings_t &platformSettings,
-                                   meshSettings_t &meshSettings,
-                                   const std::string filename) {
+void waveSettings_t::parseFromFile(platformSettings_t& platformSettings,
+                                   meshSettings_t&     meshSettings,
+                                   const std::string   filename) {
   // read all settings from file
   settings_t s(comm);
   s.readSettingsFromFile(filename);
 
-  for (auto it = s.settings.begin(); it != s.settings.end(); ++it) {
-    setting_t &set = it->second;
+  for(auto it = s.settings.begin(); it != s.settings.end(); ++it) {
+    setting_t&        set  = it->second;
     const std::string name = set.getName();
-    const std::string val = set.getVal<std::string>();
-    if (platformSettings.hasSetting(name))
+    const std::string val  = set.getVal<std::string>();
+    if(platformSettings.hasSetting(name))
       platformSettings.changeSetting(name, val);
-    else if (meshSettings.hasSetting(name))
+    else if(meshSettings.hasSetting(name))
       meshSettings.changeSetting(name, val);
-    else if (hasSetting(name)) // self
+    else if(hasSetting(name)) // self
       changeSetting(name, val);
-    else {
-      LIBP_FORCE_ABORT("Unknown setting: [" << name << "] requested");
-    }
+    else { LIBP_FORCE_ABORT("Unknown setting: [" << name << "] requested"); }
   }
 }
 
@@ -157,9 +167,10 @@ ellipticSettings_t waveSettings_t::extractEllipticSettings() {
 
   //  InitialGuess::AddSettings(_ellipticSettings);
 
-  for (auto it = _ellipticSettings.settings.begin();
-       it != _ellipticSettings.settings.end(); ++it) {
-    setting_t &set = it->second;
+  for(auto it = _ellipticSettings.settings.begin();
+      it != _ellipticSettings.settings.end();
+      ++it) {
+    setting_t&        set  = it->second;
     const std::string name = set.getName();
 
     std::string val;
@@ -171,8 +182,8 @@ ellipticSettings_t waveSettings_t::extractEllipticSettings() {
   {
     std::string val;
     getSetting("DATA FILE", val);
-    _ellipticSettings.newSetting("DATA FILE", val,
-                                 "Boundary and Initial conditions header");
+    _ellipticSettings.newSetting(
+        "DATA FILE", val, "Boundary and Initial conditions header");
   }
 
   return _ellipticSettings;

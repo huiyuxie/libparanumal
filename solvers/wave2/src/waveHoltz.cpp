@@ -29,8 +29,7 @@ SOFTWARE.
 #include "timer.hpp"
 #include "wave.hpp"
 
-void wave_t::waveHoltz(deviceMemory<dfloat> &o_qL) {
-
+void wave_t::waveHoltz(deviceMemory<dfloat>& o_qL) {
 #if 1
 
   const dlong Nhalo = elliptic.Nhalo;
@@ -66,11 +65,16 @@ void wave_t::waveHoltz(deviceMemory<dfloat> &o_qL) {
   // this becomes the RHS
   o_filtPL.copyTo(o_bL);
 
-  stoppingCriteria_t<dfloat> *waveHoltzStoppingCriteria =
+  stoppingCriteria_t<dfloat>* waveHoltzStoppingCriteria =
       new stoppingCriteria_t<dfloat>();
-  int iterD =
-      waveHoltzLinearSolver.Solve(*this, waveHoltzPrecon, o_qL, o_bL, tol,
-                                  maxIter, verbose, waveHoltzStoppingCriteria);
+  int iterD = waveHoltzLinearSolver.Solve(*this,
+                                          waveHoltzPrecon,
+                                          o_qL,
+                                          o_bL,
+                                          tol,
+                                          maxIter,
+                                          verbose,
+                                          waveHoltzStoppingCriteria);
 
   std::cout << " WOWSA " << std::endl;
 

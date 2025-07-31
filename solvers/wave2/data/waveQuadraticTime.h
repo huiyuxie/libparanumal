@@ -25,37 +25,48 @@ SOFTWARE.
 
 */
 
-#define ellipticForcing2D(x, y, lambda, f)                                     \
+#define ellipticForcing2D(x, y, lambda, f) \
   { f = 0.; }
 
 /* Homogeneous Dirichlet boundary condition   */
 #define ellipticDirichletCondition2D(x, y, nx, ny, uM, uxM, uyM, uB, uxB, uyB) \
   {                                                                            \
-    uB = 0.f;                                                                  \
+    uB  = 0.f;                                                                 \
     uxB = uxM;                                                                 \
     uyB = uyM;                                                                 \
   }
 
 /* Homogeneous Neumann boundary condition   */
-#define ellipticNeumannCondition2D(x, y, nx, ny, uM, uxM, uyM, uB, uxB, uyB)   \
-  {                                                                            \
-    uB = uM;                                                                   \
-    uxB = 0.f;                                                                 \
-    uyB = 0.f;                                                                 \
+#define ellipticNeumannCondition2D(x, y, nx, ny, uM, uxM, uyM, uB, uxB, uyB) \
+  {                                                                          \
+    uB  = uM;                                                                \
+    uxB = 0.f;                                                               \
+    uyB = 0.f;                                                               \
   }
 
-#define waveForcingFunction2D(t, x, y, sigma, omega, f)                        \
-  {                                                                            \
-    /*    f = exp(-80.*(x*x+(y-.5)*(y-.5)));    */                             \
-    f = (2.f + 2. * M_PI * M_PI * t * t) * sin(M_PI * x) * sin(M_PI * y);      \
+#define waveForcingFunction2D(t, x, y, sigma, omega, f)                   \
+  {                                                                       \
+    /*    f = exp(-80.*(x*x+(y-.5)*(y-.5)));    */                        \
+    f = (2.f + 2. * M_PI * M_PI * t * t) * sin(M_PI * x) * sin(M_PI * y); \
   }
 
-#define waveInitialConditionsFunction2D(t, x, y, d, p)                         \
-  {                                                                            \
-    d = 2.f * t * sin(M_PI * x) * sin(M_PI * y);                               \
-    p = t * t * sin(M_PI * x) * sin(M_PI * y);                                 \
+#define waveInitialConditionsFunction2D(t, x, y, d, p) \
+  {                                                    \
+    d = 2.f * t * sin(M_PI * x) * sin(M_PI * y);       \
+    p = t * t * sin(M_PI * x) * sin(M_PI * y);         \
   }
 
-#define waveSurfaceSource2D(patch, tin, xsource, ysource, fsource, xn, yn, p,  \
-                            dpdx, dpdy, d, dddx, dddy)                         \
+#define waveSurfaceSource2D(patch,   \
+                            tin,     \
+                            xsource, \
+                            ysource, \
+                            fsource, \
+                            xn,      \
+                            yn,      \
+                            p,       \
+                            dpdx,    \
+                            dpdy,    \
+                            d,       \
+                            dddx,    \
+                            dddy)    \
   {}

@@ -24,21 +24,21 @@ SOFTWARE.
 
 */
 
-#define ellipticForcing2D(x, y, lambda, f)                                     \
+#define ellipticForcing2D(x, y, lambda, f) \
   { f = 0.; }
 
 /* Homogeneous Dirichlet boundary condition   */
 #define ellipticDirichletCondition2D(x, y, nx, ny, uM, uxM, uyM, uB, uxB, uyB) \
   {                                                                            \
-    uB = 0.f;                                                                  \
+    uB  = 0.f;                                                                 \
     uxB = uxM;                                                                 \
     uyB = uyM;                                                                 \
   }
 
 /* Homogeneous Neumann boundary condition   */
-#define ellipticNeumannCondition2D(x, y, nx, ny, uM, uxM, uyM, uB, uxB, uyB)   \
-  {                                                                            \
-    uB = uM;                                                                   \
-    uxB = 0.f;                                                                 \
-    uyB = 0.f;                                                                 \
+#define ellipticNeumannCondition2D(x, y, nx, ny, uM, uxM, uyM, uB, uxB, uyB) \
+  {                                                                          \
+    uB  = uM;                                                                \
+    uxB = 0.f;                                                               \
+    uyB = 0.f;                                                               \
   }

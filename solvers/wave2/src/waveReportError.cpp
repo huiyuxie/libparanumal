@@ -28,9 +28,11 @@ SOFTWARE.
 #include "timer.hpp"
 #include "wave.hpp"
 
-void wave_t::ReportError(dfloat t, dfloat elapsedTime, int iterations,
-                         deviceMemory<dfloat> &o_DLin,
-                         deviceMemory<dfloat> &o_PLin) {
+void wave_t::ReportError(dfloat                t,
+                         dfloat                elapsedTime,
+                         int                   iterations,
+                         deviceMemory<dfloat>& o_DLin,
+                         deviceMemory<dfloat>& o_PLin) {
   memory<dfloat> DLin(Nall);
   memory<dfloat> PLin(Nall);
 
@@ -40,8 +42,8 @@ void wave_t::ReportError(dfloat t, dfloat elapsedTime, int iterations,
   memory<dfloat> exactDL(Nall);
   memory<dfloat> exactPL(Nall);
 
-  waveInitialConditionsKernel(Nall, t, mesh.o_x, mesh.o_y, mesh.o_z, o_exactDL,
-                              o_exactPL);
+  waveInitialConditionsKernel(
+      Nall, t, mesh.o_x, mesh.o_y, mesh.o_z, o_exactDL, o_exactPL);
 
   o_exactDL.copyTo(exactDL);
   o_exactPL.copyTo(exactPL);
@@ -51,7 +53,7 @@ void wave_t::ReportError(dfloat t, dfloat elapsedTime, int iterations,
 
   dfloat errDLMax = 0;
   dfloat errPLMax = 0;
-  for (int n = 0; n < Nall; ++n) {
+  for(int n = 0; n < Nall; ++n) {
     dfloat errDLn = fabs(DLin[n] - exactDL[n]);
     dfloat errPLn = fabs(PLin[n] - exactPL[n]);
 
@@ -67,15 +69,15 @@ void wave_t::ReportError(dfloat t, dfloat elapsedTime, int iterations,
   dfloat errPL2 = 0, errDL2 = 0;
   dfloat normExactPL2 = 0, normExactDL2 = 0;
   // change for other elements
-  if (mesh.elementType == Mesh::TRIANGLES ||
-      mesh.elementType == Mesh::TETRAHEDRA) {
-    for (dlong e = 0; e < mesh.Nelements; ++e) {
-      for (int n = 0; n < mesh.Np; ++n) {
-        dlong idn = e * mesh.Np + n;
+  if(mesh.elementType == Mesh::TRIANGLES ||
+     mesh.elementType == Mesh::TETRAHEDRA) {
+    for(dlong e = 0; e < mesh.Nelements; ++e) {
+      for(int n = 0; n < mesh.Np; ++n) {
+        dlong  idn     = e * mesh.Np + n;
         dfloat errPL2n = 0, normExactPL2n = 0;
         dfloat errDL2n = 0, normExactDL2n = 0;
-        for (int m = 0; m < mesh.Np; ++m) {
-          dlong idm = e * mesh.Np + m;
+        for(int m = 0; m < mesh.Np; ++m) {
+          dlong  idm  = e * mesh.Np + m;
           dfloat MMnm = mesh.MM[n * mesh.Np + m];
           errPL2n += MMnm * (PLin[idm] - exactPL[idm]);
           errDL2n += MMnm * (DLin[idm] - exactDL[idm]);
@@ -90,11 +92,11 @@ void wave_t::ReportError(dfloat t, dfloat elapsedTime, int iterations,
     }
   }
 
-  if (mesh.elementType == Mesh::QUADRILATERALS ||
-      mesh.elementType == Mesh::HEXAHEDRA) {
-    for (dlong e = 0; e < mesh.Nelements; ++e) {
-      for (int n = 0; n < mesh.Np; ++n) {
-        dlong idn = e * mesh.Np + n;
+  if(mesh.elementType == Mesh::QUADRILATERALS ||
+     mesh.elementType == Mesh::HEXAHEDRA) {
+    for(dlong e = 0; e < mesh.Nelements; ++e) {
+      for(int n = 0; n < mesh.Np; ++n) {
+        dlong  idn = e * mesh.Np + n;
         dfloat WJn = WJ[idn];
         errPL2 += WJn * pow(PLin[idn] - exactPL[idn], 2);
         errDL2 += WJn * pow(DLin[idn] - exactDL[idn], 2);
@@ -105,7 +107,7 @@ void wave_t::ReportError(dfloat t, dfloat elapsedTime, int iterations,
     }
   }
 
-  dfloat eps = 1e-16;
+  dfloat eps       = 1e-16;
   dfloat relErrDL2 = sqrt(errDL2 / (eps + normExactDL2));
   dfloat relErrPL2 = sqrt(errPL2 / (eps + normExactPL2));
 

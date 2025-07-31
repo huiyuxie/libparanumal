@@ -26,7 +26,7 @@ SOFTWARE.
 
 #include "wave.hpp"
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
   // start up MPI
   Comm::Init(argc, argv);
 
@@ -37,8 +37,8 @@ int main(int argc, char **argv) {
 
     // create default settings
     platformSettings_t platformSettings(comm);
-    meshSettings_t meshSettings(comm);
-    waveSettings_t waveSettings(comm);
+    meshSettings_t     meshSettings(comm);
+    waveSettings_t     waveSettings(comm);
 
     // load settings from file
     waveSettings.parseFromFile(platformSettings, meshSettings, argv[1]);

@@ -39,10 +39,10 @@ void wave_t::Report(dfloat time, int tstep) {
       sqrt(platform.linAlg().innerProd(Nentries, o_PL, o_MP, mesh.comm));
   o_MP.free();
 
-  if (mesh.rank == 0)
+  if(mesh.rank == 0)
     printf("\n%5.2f (%d), %5.2f (time, timestep, norm)\n", time, tstep, norm2);
 
-  if (settings.compareSetting("OUTPUT TO FILE", "TRUE")) {
+  if(settings.compareSetting("OUTPUT TO FILE", "TRUE")) {
     // copy data back to host
     o_PL.copyTo(PL);
     o_DL.copyTo(DL);

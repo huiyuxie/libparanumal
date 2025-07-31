@@ -34,14 +34,14 @@ void wave_t::Run() {
   settings.getSetting("FINAL TIME", finalTime);
 
   dfloat t = startTime;
-  omega = 0;
+  omega    = 0;
 
-  if (settings.compareSetting("SOLVER MODE", "WAVEHOLTZ")) {
+  if(settings.compareSetting("SOLVER MODE", "WAVEHOLTZ")) {
     // harmonic forcing data
     settings.getSetting("OMEGA", omega);
-    sigma = std::max((dfloat)36., omega * omega);
+    sigma           = std::max((dfloat)36., omega * omega);
     int NouterSteps = 15; // was 30
-    finalTime = NouterSteps * (2. * M_PI / omega);
+    finalTime       = NouterSteps * (2. * M_PI / omega);
 
     // should try using more accurate pressure accumulator
     Nsteps =
@@ -60,15 +60,15 @@ void wave_t::Run() {
   iostep = 1;
   settings.getSetting("OUTPUT STEP", iostep);
 
-  invGamma = 1. / gamma;
-  invDt = 1. / dt;
+  invGamma   = 1. / gamma;
+  invDt      = 1. / dt;
   invGammaDt = 1. / (gamma * dt);
 
   lambdaSolve = 1. / (gamma * gamma * dt * dt);
 
   maxIter = 5000;
   verbose = settings.compareSetting("VERBOSE", "TRUE") ? 1 : 0;
-  tol = (sizeof(dfloat) == sizeof(double)) ? 1.0e-10 : 1.0e-5; // TW !!!
+  tol     = (sizeof(dfloat) == sizeof(double)) ? 1.0e-10 : 1.0e-5; // TW !!!
 
   elliptic.settings.getSetting("ITERATIVE CONVERGENCE TOLERANCE", tol);
 
@@ -79,63 +79,63 @@ void wave_t::Run() {
 
   // rebuild precon for this lambda
   elliptic.lambda = lambdaSolve;
-  if (elliptic.settings.compareSetting("PRECONDITIONER", "JACOBI"))
+  if(elliptic.settings.compareSetting("PRECONDITIONER", "JACOBI"))
     elliptic.precon.Setup<JacobiPrecon>(elliptic);
-  else if (elliptic.settings.compareSetting("PRECONDITIONER", "MASSMATRIX"))
+  else if(elliptic.settings.compareSetting("PRECONDITIONER", "MASSMATRIX"))
     elliptic.precon.Setup<MassMatrixPrecon>(elliptic);
-  else if (elliptic.settings.compareSetting("PRECONDITIONER", "PARALMOND"))
+  else if(elliptic.settings.compareSetting("PRECONDITIONER", "PARALMOND"))
     elliptic.precon.Setup<ParAlmondPrecon>(elliptic);
-  else if (elliptic.settings.compareSetting("PRECONDITIONER", "MULTIGRID"))
+  else if(elliptic.settings.compareSetting("PRECONDITIONER", "MULTIGRID"))
     elliptic.precon.Setup<MultiGridPrecon>(elliptic);
-  else if (elliptic.settings.compareSetting("PRECONDITIONER", "SEMFEM"))
+  else if(elliptic.settings.compareSetting("PRECONDITIONER", "SEMFEM"))
     elliptic.precon.Setup<SEMFEMPrecon>(elliptic);
-  else if (elliptic.settings.compareSetting("PRECONDITIONER", "OAS"))
+  else if(elliptic.settings.compareSetting("PRECONDITIONER", "OAS"))
     elliptic.precon.Setup<OASPrecon>(elliptic);
-  else if (elliptic.settings.compareSetting("PRECONDITIONER", "NONE"))
+  else if(elliptic.settings.compareSetting("PRECONDITIONER", "NONE"))
     elliptic.precon.Setup<IdentityPrecon>(Ndofs);
 
   // build linear solvers for elliptic
-  if (elliptic.settings.compareSetting("LINEAR SOLVER", "NBPCG")) {
-    linearSolver.Setup<LinearSolver::nbpcg<dfloat>>(Ndofs, Nhalo, platform,
-                                                    elliptic.settings, comm);
-  } else if (elliptic.settings.compareSetting("LINEAR SOLVER", "NBFPCG")) {
-    linearSolver.Setup<LinearSolver::nbfpcg<dfloat>>(Ndofs, Nhalo, platform,
-                                                     elliptic.settings, comm);
-  } else if (elliptic.settings.compareSetting("LINEAR SOLVER", "PCG")) {
-    linearSolver.Setup<LinearSolver::pcg<dfloat>>(Ndofs, Nhalo, platform,
-                                                  elliptic.settings, comm);
-  } else if (elliptic.settings.compareSetting("LINEAR SOLVER", "PGMRES")) {
-    linearSolver.Setup<LinearSolver::pgmres<dfloat>>(Ndofs, Nhalo, platform,
-                                                     elliptic.settings, comm);
-  } else if (elliptic.settings.compareSetting("LINEAR SOLVER", "PMINRES")) {
-    linearSolver.Setup<LinearSolver::pminres<dfloat>>(Ndofs, Nhalo, platform,
-                                                      elliptic.settings, comm);
+  if(elliptic.settings.compareSetting("LINEAR SOLVER", "NBPCG")) {
+    linearSolver.Setup<LinearSolver::nbpcg<dfloat>>(
+        Ndofs, Nhalo, platform, elliptic.settings, comm);
+  } else if(elliptic.settings.compareSetting("LINEAR SOLVER", "NBFPCG")) {
+    linearSolver.Setup<LinearSolver::nbfpcg<dfloat>>(
+        Ndofs, Nhalo, platform, elliptic.settings, comm);
+  } else if(elliptic.settings.compareSetting("LINEAR SOLVER", "PCG")) {
+    linearSolver.Setup<LinearSolver::pcg<dfloat>>(
+        Ndofs, Nhalo, platform, elliptic.settings, comm);
+  } else if(elliptic.settings.compareSetting("LINEAR SOLVER", "PGMRES")) {
+    linearSolver.Setup<LinearSolver::pgmres<dfloat>>(
+        Ndofs, Nhalo, platform, elliptic.settings, comm);
+  } else if(elliptic.settings.compareSetting("LINEAR SOLVER", "PMINRES")) {
+    linearSolver.Setup<LinearSolver::pminres<dfloat>>(
+        Ndofs, Nhalo, platform, elliptic.settings, comm);
   }
 
   // build initial guess strategy
-  if (elliptic.settings.compareSetting("INITIAL GUESS STRATEGY", "LAST")) {
+  if(elliptic.settings.compareSetting("INITIAL GUESS STRATEGY", "LAST")) {
     linearSolver.SetupInitialGuess<InitialGuess::Last<dfloat>>(
         Ndofs, platform, elliptic.settings, comm);
-  } else if (elliptic.settings.compareSetting("INITIAL GUESS STRATEGY",
-                                              "ZERO")) {
+  } else if(elliptic.settings.compareSetting("INITIAL GUESS STRATEGY",
+                                             "ZERO")) {
     linearSolver.SetupInitialGuess<InitialGuess::Zero<dfloat>>(
         Ndofs, platform, elliptic.settings, comm);
-  } else if (elliptic.settings.compareSetting("INITIAL GUESS STRATEGY",
-                                              "CLASSIC")) {
+  } else if(elliptic.settings.compareSetting("INITIAL GUESS STRATEGY",
+                                             "CLASSIC")) {
     linearSolver.SetupInitialGuess<InitialGuess::ClassicProjection<dfloat>>(
         Ndofs, platform, elliptic.settings, comm);
-  } else if (elliptic.settings.compareSetting("INITIAL GUESS STRATEGY", "QR")) {
+  } else if(elliptic.settings.compareSetting("INITIAL GUESS STRATEGY", "QR")) {
     linearSolver.SetupInitialGuess<InitialGuess::RollingQRProjection<dfloat>>(
         Ndofs, platform, elliptic.settings, comm);
-  } else if (elliptic.settings.compareSetting("INITIAL GUESS STRATEGY",
-                                              "EXTRAP")) {
+  } else if(elliptic.settings.compareSetting("INITIAL GUESS STRATEGY",
+                                             "EXTRAP")) {
     linearSolver.SetupInitialGuess<InitialGuess::Extrap<dfloat>>(
         Ndofs, platform, elliptic.settings, comm);
   }
 
   // set initial conditions
-  waveInitialConditionsKernel(Nall, t, mesh.o_x, mesh.o_y, mesh.o_z, o_DL,
-                              o_PL);
+  waveInitialConditionsKernel(
+      Nall, t, mesh.o_x, mesh.o_y, mesh.o_z, o_DL, o_PL);
 
 #if 0
   // set up some monochromatic forcing (https://arxiv.org/pdf/1910.10148.pdf)
@@ -143,7 +143,7 @@ void wave_t::Run() {
   waveForcingKernel(Nall, t, sigma, omega, mesh.o_x, mesh.o_y, mesh.o_z, o_FL); // will use cos(omega*t)*FL
 #endif
 
-  if (elliptic.settings.compareSetting("STOPPING CRITERIA", "ERRORESTIMATE")) {
+  if(elliptic.settings.compareSetting("STOPPING CRITERIA", "ERRORESTIMATE")) {
     esc = new ellipticStoppingCriteria<dfloat>(&elliptic, NULL);
     esc->reset();
     stoppingCriteria = esc;
@@ -152,7 +152,7 @@ void wave_t::Run() {
   }
 
   // choose which model to run
-  if (settings.compareSetting("SOLVER MODE", "WAVEHOLTZ")) {
+  if(settings.compareSetting("SOLVER MODE", "WAVEHOLTZ")) {
     deviceMemory<dfloat> o_qL = platform.malloc<dfloat>(Nall);
     waveHoltz(o_qL);
   } else {
@@ -171,7 +171,7 @@ void wave_t::Run() {
     // output error
     //    ReportError(finalTime, elapsedTime, o_DL, o_PL);
 
-    if (settings.compareSetting("OUTPUT TO FILE", "TRUE")) {
+    if(settings.compareSetting("OUTPUT TO FILE", "TRUE")) {
       // copy data back to host
       // output field files
       std::string name;
@@ -187,13 +187,18 @@ void wave_t::Run() {
       char fname[BUFSIZ];
       // write to binary file
       sprintf(fname, "SOLN_DP_%04d.bin", mesh.rank);
-      FILE *fp = fopen(fname, "w");
+      FILE* fp = fopen(fname, "w");
       fprintf(
           fp,
           "# libParanumal binary format: blocks of Np*Nel doubles for "
           "(x,y,DL,PL,..). First line is: dim,Np,Nel,Nfields,sizeof(dfloat)\n");
-      fprintf(fp, "%d %d %d %d %d (x,y,PL,DL)\n", mesh.dim, mesh.Np,
-              mesh.Nelements, 4, sizeof(dfloat));
+      fprintf(fp,
+              "%d %d %d %d %d (x,y,PL,DL)\n",
+              mesh.dim,
+              mesh.Np,
+              mesh.Nelements,
+              4,
+              sizeof(dfloat));
       dlong NpNel = mesh.Np * mesh.Nelements;
       fwrite(mesh.x.ptr(), NpNel, sizeof(dfloat), fp);
       fwrite(mesh.y.ptr(), NpNel, sizeof(dfloat), fp);
