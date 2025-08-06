@@ -63,9 +63,11 @@ int main(int argc, char** argv) {
     mesh_t mesh(platform, meshSettings, comm);
 
     // Boundary Type translation. Just defaults.
+    // notes: call into wave_t::Setup
     wave_t wave(platform, mesh, waveSettings);
 
     // run
+    // notes: call into wave_t::Run
     wave.Run();
   }
 

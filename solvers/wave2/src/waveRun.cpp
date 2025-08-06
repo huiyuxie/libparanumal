@@ -68,6 +68,7 @@ void wave_t::Run() {
   invDt      = 1. / dt;
   invGammaDt = 1. / (gamma * dt);
 
+  // notes: real lambdaSolve value
   lambdaSolve = 1. / (gamma * gamma * dt * dt);
 
   maxIter = 5000;
@@ -200,7 +201,7 @@ void wave_t::Run() {
               << elapsedTime << std::endl;
 
     // output error
-    //    ReportError(finalTime, elapsedTime, o_DL, o_PL);
+    // ReportError(finalTime, elapsedTime, o_DL, o_PL);
 
     if(settings.compareSetting("OUTPUT TO FILE", "TRUE")) {
       // copy data back to host

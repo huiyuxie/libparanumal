@@ -2,25 +2,30 @@
 
   The MIT License (MIT)
 
-  Copyright (c) 2017-2022 Tim Warburton, Noel Chalmers, Jesse Chan, Ali Karakus
+  Copyright (c) 2017-2022 Tim Warburton, Noel Chalmers,
+  Jesse Chan, Ali Karakus
 
-  Permission is hereby granted, free of charge, to any person obtaining a copy
-  of this software and associated documentation files (the "Software"), to deal
-  in the Software without restriction, including without limitation the rights
-  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-  copies of the Software, and to permit persons to whom the Software is
+  Permission is hereby granted, free of charge, to any
+  person obtaining a copy of this software and associated
+  documentation files (the "Software"), to deal in the
+  Software without restriction, including without limitation
+  the rights to use, copy, modify, merge, publish,
+  distribute, sublicense, and/or sell copies of the
+  Software, and to permit persons to whom the Software is
   furnished to do so, subject to the following conditions:
 
-  The above copyright notice and this permission notice shall be included in all
-  copies or substantial portions of the Software.
+  The above copyright notice and this permission notice
+  shall be included in all copies or substantial portions of
+  the Software.
 
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-  SOFTWARE.
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+  KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
+  WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+  PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+  OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+  OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
 
@@ -41,31 +46,32 @@
 using namespace libp;
 
 class waveSettings_t : public settings_t {
-public:
-  waveSettings_t(comm_t &_comm);
+  public:
+  waveSettings_t(comm_t& _comm);
   void report();
-  void parseFromFile(platformSettings_t &platformSettings,
-                     meshSettings_t &meshSettings, const std::string filename);
+  void parseFromFile(platformSettings_t& platformSettings,
+                     meshSettings_t&     meshSettings,
+                     const std::string   filename);
 
   ellipticSettings_t extractEllipticSettings();
 };
 
 class wave_t : public solver_t {
-public:
+  public:
   mesh_t mesh;
 
   ellipticSettings_t ellipticSettings;
-  elliptic_t elliptic;
+  elliptic_t         elliptic;
 
   linearSolver_t<dfloat> linearSolver;
 
   int Nfields = 1;
   int disc_c0 = 0;
 
-  int Niter;
-  int iostep;
-  int maxIter;
-  int verbose;
+  int    Niter;
+  int    iostep;
+  int    maxIter;
+  int    verbose;
   dfloat tol;
 
   dlong Nall;
@@ -74,13 +80,13 @@ public:
   dfloat ellipticTOL;
   dfloat tau;
 
-  int Nstages;
-  int embedded;
+  int    Nstages;
+  int    embedded;
   dfloat gamma;
   dfloat invGamma;
   dfloat invGammaDt;
   dfloat invDt;
-  int Nsteps;
+  int    Nsteps;
   dfloat dt;
   dfloat startTime;
   dfloat finalTime;
@@ -95,10 +101,11 @@ public:
   dfloat zsource;
   dfloat fsource;
 
-  memory<int> patchLabels;
+  memory<int>       patchLabels;
   deviceMemory<int> o_EToPatch;
 
-  linAlgMatrix_t<dfloat> alpha, beta, betahat, esdirkC, alphatilde, gammatilde;
+  linAlgMatrix_t<dfloat> alpha, beta, betahat, esdirkC,
+      alphatilde, gammatilde;
 
   deviceMemory<dfloat> o_alphatilde;
   deviceMemory<dfloat> o_gammatilde;
@@ -144,8 +151,8 @@ public:
   deviceMemory<dfloat> o_invWJ;
   deviceMemory<dfloat> o_WJ;
 
-  stoppingCriteria_t<dfloat> *stoppingCriteria = NULL;
-  ellipticStoppingCriteria<dfloat> *esc = NULL;
+  stoppingCriteria_t<dfloat>*       stoppingCriteria = NULL;
+  ellipticStoppingCriteria<dfloat>* esc              = NULL;
 
   kernel_t waveStageUpdateKernel;
   kernel_t waveCombineKernel;
@@ -165,36 +172,46 @@ public:
   kernel_t waveSurfaceSourceKernel;
 
   wave_t() = default;
-  wave_t(platform_t &_platform, mesh_t &_mesh, waveSettings_t &_settings) {
+  wave_t(platform_t&     _platform,
+         mesh_t&         _mesh,
+         waveSettings_t& _settings) {
     Setup(_platform, _mesh, _settings);
   }
 
   // setup
-  void Setup(platform_t &_platform, mesh_t &_mesh, waveSettings_t &_settings);
+  void Setup(platform_t&     _platform,
+             mesh_t&         _mesh,
+             waveSettings_t& _settings);
 
-  void Solve(deviceMemory<dfloat> &_o_DL, deviceMemory<dfloat> &_o_PL,
-             deviceMemory<dfloat> &_o_FL);
+  void Solve(deviceMemory<dfloat>& _o_DL,
+             deviceMemory<dfloat>& _o_PL,
+             deviceMemory<dfloat>& _o_FL);
 
   // skip v2 for now
   //  void SolveV2(deviceMemory<dfloat> &_o_DL,
   //               deviceMemory<dfloat> &_o_PL,
   //               deviceMemory<dfloat> &_o_FL);
 
-  void Operator(deviceMemory<dfloat> &inPL, deviceMemory<dfloat> &outPL);
+  void Operator(deviceMemory<dfloat>& inPL,
+                deviceMemory<dfloat>& outPL);
 
-  void waveHoltz(deviceMemory<dfloat> &o_qL);
+  void waveHoltz(deviceMemory<dfloat>& o_qL);
   // skip v2 for now
-  //  void waveHoltzV2(deviceMemory<dfloat> &o_qL);
+  // void waveHoltzV2(deviceMemory<dfloat> &o_qL);
 
   void Run();
 
   void Report(dfloat time, int tstep);
 
-  void ReportError(dfloat t, dfloat elapsedTime, int iterations,
-                   deviceMemory<dfloat> &DL, deviceMemory<dfloat> &PL);
+  void ReportError(dfloat                t,
+                   dfloat                elapsedTime,
+                   int                   iterations,
+                   deviceMemory<dfloat>& DL,
+                   deviceMemory<dfloat>& PL);
 
-  void PlotFields(libp::memory<dfloat> &DL, libp::memory<dfloat> &PL,
-                  std::string fileName);
+  void PlotFields(libp::memory<dfloat>& DL,
+                  libp::memory<dfloat>& PL,
+                  std::string           fileName);
 };
 
 #endif
