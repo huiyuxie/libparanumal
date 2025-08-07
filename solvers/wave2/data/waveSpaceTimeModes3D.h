@@ -34,65 +34,40 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   { f = 0.; }
 
 /* Homogeneous Dirichlet boundary condition   */
-#define ellipticDirichletCondition3D(x,   \
-                                     y,   \
-                                     z,   \
-                                     nx,  \
-                                     ny,  \
-                                     nz,  \
-                                     uM,  \
-                                     uxM, \
-                                     uyM, \
-                                     uzM, \
-                                     uB,  \
-                                     uxB, \
-                                     uyB, \
-                                     uzB) \
-  {                                       \
-    uB  = 0.f;                            \
-    uxB = uxM;                            \
-    uyB = uyM;                            \
-    uzB = uzM;                            \
+#define ellipticDirichletCondition3D(                          \
+    x, y, z, nx, ny, nz, uM, uxM, uyM, uzM, uB, uxB, uyB, uzB) \
+  {                                                            \
+    uB  = 0.f;                                                 \
+    uxB = uxM;                                                 \
+    uyB = uyM;                                                 \
+    uzB = uzM;                                                 \
   }
 
 /* Homogeneous Neumann boundary condition   */
-#define ellipticNeumannCondition3D(x,   \
-                                   y,   \
-                                   z,   \
-                                   nx,  \
-                                   ny,  \
-                                   nz,  \
-                                   uM,  \
-                                   uxM, \
-                                   uyM, \
-                                   uzM, \
-                                   uB,  \
-                                   uxB, \
-                                   uyB, \
-                                   uzB) \
-  {                                     \
-    uB  = uM;                           \
-    uxB = 0.f;                          \
-    uyB = 0.f;                          \
-    uzB = 0.f;                          \
+#define ellipticNeumannCondition3D(                            \
+    x, y, z, nx, ny, nz, uM, uxM, uyM, uzM, uB, uxB, uyB, uzB) \
+  {                                                            \
+    uB  = uM;                                                  \
+    uxB = 0.f;                                                 \
+    uyB = 0.f;                                                 \
+    uzB = 0.f;                                                 \
   }
 
 #define waveForcingFunction3D(t, x, y, z, sigma, omega, f) \
   { f = 0; }
 
-#define waveInitialConditionsFunction3D(t, x, y, z, d, p) \
-  {                                                       \
-    d = 0;                                                \
-    p = 0;                                                \
-    for(int mode = 1; mode < 4; ++mode) {                 \
-      dfloat mPI = mode * M_PI;                           \
-      dfloat sc  = exp(-(dfloat)mode);                    \
-      d += sc * mPI * sqrt(3.) * sin(mPI * x) *           \
-           sin(mPI * y) * sin(mPI * z) *                  \
-           cos(mPI * sqrt(3.) * t);                       \
-      p += sc * sin(mPI * x) * sin(mPI * y) *             \
-           sin(mPI * z) * sin(mPI * sqrt(3.) * t);        \
-    }                                                     \
+#define waveInitialConditionsFunction3D(t, x, y, z, d, p)                     \
+  {                                                                           \
+    d = 0;                                                                    \
+    p = 0;                                                                    \
+    for(int mode = 1; mode < 4; ++mode) {                                     \
+      dfloat mPI = mode * M_PI;                                               \
+      dfloat sc  = exp(-(dfloat)mode);                                        \
+      d += sc * mPI * sqrt(3.) * sin(mPI * x) * sin(mPI * y) * sin(mPI * z) * \
+           cos(mPI * sqrt(3.) * t);                                           \
+      p += sc * sin(mPI * x) * sin(mPI * y) * sin(mPI * z) *                  \
+           sin(mPI * sqrt(3.) * t);                                           \
+    }                                                                         \
   }
 
 #define waveSurfaceSource3D(patch,   \

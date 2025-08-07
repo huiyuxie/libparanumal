@@ -33,15 +33,13 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "timer.hpp"
 #include "wave.hpp"
 
-void wave_t::Operator(deviceMemory<dfloat>& o_QL,
-                      deviceMemory<dfloat>& o_AQL) {
+void wave_t::Operator(deviceMemory<dfloat>& o_QL, deviceMemory<dfloat>& o_AQL) {
 #if 1
   // THIS IMPACTS -
   // o_DhatL, o_PhatL, o_DrhsL,  o_Dtilde, o_DtildeL, o_Drhs
 
   linAlgMatrix_t<dfloat> filtD(1, Nstages);
-  deviceMemory<dfloat>   o_filtD =
-      platform.malloc<dfloat>(Nstages);
+  deviceMemory<dfloat>   o_filtD = platform.malloc<dfloat>(Nstages);
 
   // zero velocity divergence
   platform.linAlg().set(Nall, (dfloat)0., o_DL);
@@ -52,8 +50,7 @@ void wave_t::Operator(deviceMemory<dfloat>& o_QL,
   // copy IC
   o_QL.copyTo(o_PL);
 
-  for(int tstep = 0; tstep < Nsteps;
-      ++tstep) { // do adaptive later
+  for(int tstep = 0; tstep < Nsteps; ++tstep) { // do adaptive later
     int iter = 0;
 
     dfloat t = tstep * dt;
@@ -85,8 +82,7 @@ void wave_t::Operator(deviceMemory<dfloat>& o_QL,
 
       // gather rhs to globalDofs if c0
       if(disc_c0) {
-        elliptic.ogsMasked.Gather(
-            o_Drhs, o_DrhsL, 1, ogs::Add, ogs::Trans);
+        elliptic.ogsMasked.Gather(o_Drhs, o_DrhsL, 1, ogs::Add, ogs::Trans);
         elliptic.ogsMasked.Gather(
             o_Dtilde, o_DtildeL, 1, ogs::Add, ogs::NoTrans);
       } else {
@@ -105,8 +101,7 @@ void wave_t::Operator(deviceMemory<dfloat>& o_QL,
 
       // add the boundary data to the masked nodes
       if(disc_c0) {
-        elliptic.ogsMasked.Scatter(
-            o_DtildeL, o_Dtilde, 1, ogs::NoTrans);
+        elliptic.ogsMasked.Scatter(o_DtildeL, o_Dtilde, 1, ogs::NoTrans);
       } else {
         o_Dtilde.copyTo(o_DtildeL);
       }
@@ -139,26 +134,16 @@ void wave_t::Operator(deviceMemory<dfloat>& o_QL,
                               o_DrhsL); // remember 1-index
     }
 
-    waveCombineKernel(Nall,
-                      Nstages,
-                      dt,
-                      o_beta,
-                      o_betaAlpha,
-                      o_PhatL,
-                      o_DhatL,
-                      o_scratch1L);
+    waveCombineKernel(
+        Nall, Nstages, dt, o_beta, o_betaAlpha, o_PhatL, o_DhatL, o_scratch1L);
 
     elliptic.lambda = 0;
     if(disc_c0) {
       // gather up RHS
-      elliptic.ogsMasked.Gather(o_scratch1,
-                                o_scratch1L,
-                                1,
-                                ogs::Add,
-                                ogs::NoTrans);
+      elliptic.ogsMasked.Gather(
+          o_scratch1, o_scratch1L, 1, ogs::Add, ogs::NoTrans);
       elliptic.Operator(o_scratch1, o_scratch2);
-      elliptic.ogsMasked.Scatter(
-          o_scratch2L, o_scratch2, 1, ogs::NoTrans);
+      elliptic.ogsMasked.Scatter(o_scratch2L, o_scratch2, 1, ogs::NoTrans);
     } else {
       elliptic.Operator(o_scratch1L, o_scratch2L);
     }
@@ -167,13 +152,10 @@ void wave_t::Operator(deviceMemory<dfloat>& o_QL,
     dfloat filtP = 0;
     filtD        = (dfloat)0.;
 
-    if(settings.compareSetting("SOLVER MODE",
-                               "WAVEHOLTZ")) {
+    if(settings.compareSetting("SOLVER MODE", "WAVEHOLTZ")) {
       for(int i = 1; i <= Nstages; ++i) {
         dfloat filti =
-            2. *
-            (cos(omega * (t + dt * esdirkC(1, i))) - 0.25) /
-            finalTime;
+            2. * (cos(omega * (t + dt * esdirkC(1, i))) - 0.25) / finalTime;
         filtP += beta(i) * filti;
         for(int j = 1; j <= i; ++j) {
           filtD(1, j) += beta(i) * filti * alpha(i, j);
@@ -207,8 +189,7 @@ void wave_t::Operator(deviceMemory<dfloat>& o_QL,
   }
 
   // AQL = (I - OP)*QL;
-  platform.linAlg().axpy(
-      Nall, (dfloat)1., o_QL, (dfloat)-1., o_AQL);
+  platform.linAlg().axpy(Nall, (dfloat)1., o_QL, (dfloat)-1., o_AQL);
 
   if(settings.compareSetting("OUTPUT TO FILE", "TRUE")) {
     static int slice = 0;
@@ -231,8 +212,7 @@ void wave_t::Operator(deviceMemory<dfloat>& o_QL,
 #else
 
   linAlgMatrix_t<dfloat> filtD(1, Nstages);
-  deviceMemory<dfloat>   o_filtD =
-      platform.malloc<dfloat>(Nstages);
+  deviceMemory<dfloat>   o_filtD = platform.malloc<dfloat>(Nstages);
 
   // zero velocity divergence
   platform.linAlg().set(Nall, (dfloat)0., o_DL);
@@ -243,8 +223,7 @@ void wave_t::Operator(deviceMemory<dfloat>& o_QL,
   // copy IC
   o_QL.copyTo(o_PL);
 
-  for(int tstep = 0; tstep < Nsteps;
-      ++tstep) { // do adaptive later
+  for(int tstep = 0; tstep < Nsteps; ++tstep) { // do adaptive later
     int iter = 0;
 
     dfloat t = tstep * dt;
@@ -252,8 +231,7 @@ void wave_t::Operator(deviceMemory<dfloat>& o_QL,
     timePoint_t starts = GlobalPlatformTime(platform);
 
     // PhatL = PL, DhatL = DL
-    waveStepInitializeKernelV2(
-        Nall, o_DL, o_PL, o_DhatL, o_PhatL);
+    waveStepInitializeKernelV2(Nall, o_DL, o_PL, o_DhatL, o_PhatL);
 
     // LOOP OVER IMPLICIT STAGES
     for(int stage = 2; stage <= Nstages; ++stage) {
@@ -270,14 +248,10 @@ void wave_t::Operator(deviceMemory<dfloat>& o_QL,
       elliptic.lambda = 0;
       if(disc_c0) {
         // gather up RHS
-        elliptic.ogsMasked.Gather(o_scratch1,
-                                  o_scratch1L,
-                                  1,
-                                  ogs::Add,
-                                  ogs::NoTrans);
+        elliptic.ogsMasked.Gather(
+            o_scratch1, o_scratch1L, 1, ogs::Add, ogs::NoTrans);
         elliptic.Operator(o_scratch1, o_scratch2);
-        elliptic.ogsMasked.Scatter(
-            o_scratch2L, o_scratch2, 1, ogs::NoTrans);
+        elliptic.ogsMasked.Scatter(o_scratch2L, o_scratch2, 1, ogs::NoTrans);
       } else {
         elliptic.Operator(o_scratch1L, o_scratch2L);
       }
@@ -305,8 +279,7 @@ void wave_t::Operator(deviceMemory<dfloat>& o_QL,
 
       // gather rhs to globalDofs if c0
       if(disc_c0) {
-        elliptic.ogsMasked.Gather(
-            o_Drhs, o_DrhsL, 1, ogs::Add, ogs::Trans);
+        elliptic.ogsMasked.Gather(o_Drhs, o_DrhsL, 1, ogs::Add, ogs::Trans);
       } else {
         o_DrhsL.copyTo(o_Drhs);
       }
@@ -320,8 +293,7 @@ void wave_t::Operator(deviceMemory<dfloat>& o_QL,
                                  stoppingCriteria);
 
       if(disc_c0) { // scatter x to LocalDofs if c0
-        elliptic.ogsMasked.Scatter(
-            o_DtildeL, o_Dtilde, 1, ogs::NoTrans);
+        elliptic.ogsMasked.Scatter(o_DtildeL, o_Dtilde, 1, ogs::NoTrans);
       } else {
         o_Dtilde.copyTo(o_DtildeL);
       }
@@ -344,27 +316,17 @@ void wave_t::Operator(deviceMemory<dfloat>& o_QL,
     // D = Dhat(:,1) + dt*LAP*(Phat(:,1:Nstages)*beta');
 
     // a. Phat(:,1:Nstages)*beta' => o_scratchL
-    waveCombineKernel(Nall,
-                      Nstages,
-                      dt,
-                      o_beta,
-                      o_betaAlpha,
-                      o_PhatL,
-                      o_DhatL,
-                      o_scratch1L);
+    waveCombineKernel(
+        Nall, Nstages, dt, o_beta, o_betaAlpha, o_PhatL, o_DhatL, o_scratch1L);
 
     // b. L*(Phat(:,1:Nstages)*beta') => o_rDL
     elliptic.lambda = 0;
     if(disc_c0) {
       // gather up RHS
-      elliptic.ogsMasked.Gather(o_scratch1,
-                                o_scratch1L,
-                                1,
-                                ogs::Add,
-                                ogs::NoTrans);
+      elliptic.ogsMasked.Gather(
+          o_scratch1, o_scratch1L, 1, ogs::Add, ogs::NoTrans);
       elliptic.Operator(o_scratch1, o_scratch2);
-      elliptic.ogsMasked.Scatter(
-          o_scratch2L, o_scratch2, 1, ogs::NoTrans);
+      elliptic.ogsMasked.Scatter(o_scratch2L, o_scratch2, 1, ogs::NoTrans);
     } else {
       elliptic.Operator(o_scratch1L, o_scratch2L);
     }
@@ -380,13 +342,10 @@ void wave_t::Operator(deviceMemory<dfloat>& o_QL,
     dfloat filtP = 0;
     filtD        = (dfloat)0.;
 
-    if(settings.compareSetting("SOLVER MODE",
-                               "WAVEHOLTZ")) {
+    if(settings.compareSetting("SOLVER MODE", "WAVEHOLTZ")) {
       for(int i = 1; i <= Nstages; ++i) {
         dfloat filti =
-            2. *
-            (cos(omega * (t + dt * esdirkC(1, i))) - 0.25) /
-            finalTime;
+            2. * (cos(omega * (t + dt * esdirkC(1, i))) - 0.25) / finalTime;
         filtP += beta(1, i) * filti;
         for(int j = 1; j <= i; ++j) {
           filtD(1, j) += beta(1, i) * filti * alpha(i, j);
@@ -426,8 +385,7 @@ void wave_t::Operator(deviceMemory<dfloat>& o_QL,
     double elapsedTime = ElapsedTime(starts, ends);
 
     if((mesh.rank == 0) && verbose) {
-      printf("%d, " hlongFormat
-             ", %g, %d, %g, %g; global: N, dofs, elapsed, "
+      printf("%d, " hlongFormat ", %g, %d, %g, %g; global: N, dofs, elapsed, "
              "iterations, time per "
              "node, nodes*iterations/time %s\n",
              mesh.N,
@@ -436,15 +394,12 @@ void wave_t::Operator(deviceMemory<dfloat>& o_QL,
              iter,
              elapsedTime / (NglobalDofs),
              NglobalDofs * ((dfloat)iter / elapsedTime),
-             (char*)elliptic.settings
-                 .getSetting("PRECONDITIONER")
-                 .c_str());
+             (char*)elliptic.settings.getSetting("PRECONDITIONER").c_str());
     }
   }
 
   // AQL = (I - OP)*QL;
-  platform.linAlg().axpy(
-      Nall, (dfloat)1., o_QL, (dfloat)-1., o_AQL);
+  platform.linAlg().axpy(Nall, (dfloat)1., o_QL, (dfloat)-1., o_AQL);
 
   if(settings.compareSetting("OUTPUT TO FILE", "TRUE")) {
     static int slice = 0;

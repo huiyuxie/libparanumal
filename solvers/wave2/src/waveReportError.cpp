@@ -41,21 +41,14 @@ void wave_t::ReportError(dfloat                t,
   memory<dfloat> DLin(Nall);
   memory<dfloat> PLin(Nall);
 
-  deviceMemory<dfloat> o_exactDL =
-      platform.malloc<dfloat>(Nall);
-  deviceMemory<dfloat> o_exactPL =
-      platform.malloc<dfloat>(Nall);
+  deviceMemory<dfloat> o_exactDL = platform.malloc<dfloat>(Nall);
+  deviceMemory<dfloat> o_exactPL = platform.malloc<dfloat>(Nall);
 
   memory<dfloat> exactDL(Nall);
   memory<dfloat> exactPL(Nall);
 
-  waveInitialConditionsKernel(Nall,
-                              t,
-                              mesh.o_x,
-                              mesh.o_y,
-                              mesh.o_z,
-                              o_exactDL,
-                              o_exactPL);
+  waveInitialConditionsKernel(
+      Nall, t, mesh.o_x, mesh.o_y, mesh.o_z, o_exactDL, o_exactPL);
 
   o_exactDL.copyTo(exactDL);
   o_exactPL.copyTo(exactPL);
@@ -75,8 +68,8 @@ void wave_t::ReportError(dfloat                t,
 
   std::cout << std::setprecision(6);
   std::cout << std::scientific;
-  std::cout << "errDLMax = " << errDLMax
-            << " errPLMax = " << errPLMax << std::endl;
+  std::cout << "errDLMax = " << errDLMax << " errPLMax = " << errPLMax
+            << std::endl;
 
   dfloat errPL2 = 0, errDL2 = 0;
   dfloat normExactPL2 = 0, normExactDL2 = 0;
@@ -96,14 +89,10 @@ void wave_t::ReportError(dfloat                t,
           normExactPL2n += MMnm * exactPL[idm];
           normExactDL2n += MMnm * exactDL[idm];
         }
-        errPL2 +=
-            WJ[e] * (PLin[idn] - exactPL[idn]) * errPL2n;
-        errDL2 +=
-            WJ[e] * (DLin[idn] - exactDL[idn]) * errDL2n;
-        normExactPL2 +=
-            WJ[e] * (exactPL[idn]) * normExactPL2n;
-        normExactDL2 +=
-            WJ[e] * (exactDL[idn]) * normExactDL2n;
+        errPL2 += WJ[e] * (PLin[idn] - exactPL[idn]) * errPL2n;
+        errDL2 += WJ[e] * (DLin[idn] - exactDL[idn]) * errDL2n;
+        normExactPL2 += WJ[e] * (exactPL[idn]) * normExactPL2n;
+        normExactDL2 += WJ[e] * (exactDL[idn]) * normExactDL2n;
       }
     }
   }
@@ -127,10 +116,9 @@ void wave_t::ReportError(dfloat                t,
   dfloat relErrDL2 = sqrt(errDL2 / (eps + normExactDL2));
   dfloat relErrPL2 = sqrt(errPL2 / (eps + normExactPL2));
 
-  std::cout << t << "," << mesh.N << ", " << mesh.Nelements
-            << ", " << dt << ", " << iterations << ", "
-            << relErrDL2 << ", " << relErrPL2 << ", "
-            << elapsedTime
+  std::cout << t << "," << mesh.N << ", " << mesh.Nelements << ", " << dt
+            << ", " << iterations << ", " << relErrDL2 << ", " << relErrPL2
+            << ", " << elapsedTime
             << "; %% t, N, Nelements, dt, relErrDL2, "
                "relErrPL2, elapsedTime"
             << std::endl;

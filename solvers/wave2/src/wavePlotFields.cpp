@@ -40,10 +40,9 @@ void wave_t::PlotFields(libp::memory<dfloat>& D,
 
   fp = fopen(fileName.c_str(), "w");
 
-  fprintf(
-      fp,
-      "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" "
-      "byte_order=\"BigEndian\">\n");
+  fprintf(fp,
+          "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" "
+          "byte_order=\"BigEndian\">\n");
   fprintf(fp, "  <UnstructuredGrid>\n");
   fprintf(fp,
           "    <Piece NumberOfPoints=\"%d\" "
@@ -70,8 +69,7 @@ void wave_t::PlotFields(libp::memory<dfloat>& D,
   for(dlong e = 0; e < mesh.Nelements; ++e) {
     mesh.PlotInterp(mesh.x + e * mesh.Np, Ix, scratch);
     mesh.PlotInterp(mesh.y + e * mesh.Np, Iy, scratch);
-    if(mesh.dim == 3)
-      mesh.PlotInterp(mesh.z + e * mesh.Np, Iz, scratch);
+    if(mesh.dim == 3) mesh.PlotInterp(mesh.z + e * mesh.Np, Iz, scratch);
 
     if(mesh.dim == 2) {
       for(int n = 0; n < mesh.plotNp; ++n) {
@@ -97,15 +95,12 @@ void wave_t::PlotFields(libp::memory<dfloat>& D,
           "NumberOfComponents=\"%d\" Format=\"ascii\">\n",
           2);
   for(dlong e = 0; e < mesh.Nelements; ++e) {
-    mesh.PlotInterp(
-        P + e * mesh.Np, Iq + 0 * mesh.plotNp, scratch);
-    mesh.PlotInterp(
-        D + e * mesh.Np, Iq + 1 * mesh.plotNp, scratch);
+    mesh.PlotInterp(P + e * mesh.Np, Iq + 0 * mesh.plotNp, scratch);
+    mesh.PlotInterp(D + e * mesh.Np, Iq + 1 * mesh.plotNp, scratch);
 
     for(int n = 0; n < mesh.plotNp; ++n) {
       fprintf(fp, "       ");
-      for(int f = 0; f < 2; f++)
-        fprintf(fp, "%f ", Iq[n + f * mesh.plotNp]);
+      for(int f = 0; f < 2; f++) fprintf(fp, "%f ", Iq[n + f * mesh.plotNp]);
       fprintf(fp, "\n");
     }
   }
@@ -124,8 +119,7 @@ void wave_t::PlotFields(libp::memory<dfloat>& D,
       for(int m = 0; m < mesh.plotNverts; ++m) {
         fprintf(fp,
                 "%d ",
-                e * mesh.plotNp +
-                    mesh.plotEToV[n * mesh.plotNverts + m]);
+                e * mesh.plotNp + mesh.plotEToV[n * mesh.plotNverts + m]);
       }
       fprintf(fp, "\n");
     }

@@ -32,11 +32,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "wave.hpp"
 
 template <typename T>
-void printMatrixLocal(linAlgMatrix_t<T>& A,
-                      const char*        str) {
+void printMatrixLocal(linAlgMatrix_t<T>& A, const char* str) {
 #if 1
-  std::cout << "matrix: " << std::string(str) << "["
-            << std::endl;
+  std::cout << "matrix: " << std::string(str) << "[" << std::endl;
   for(int r = 1; r <= A.rows(); ++r) {
     for(int c = 1; c <= A.cols(); ++c) {
       //      std::cout << A(r,c) << " ";
@@ -60,8 +58,7 @@ void wave_t::Setup(platform_t&     _platform,
   // Trigger JIT kernel builds
   ogs::InitializeKernels(platform, ogs::Dfloat, ogs::Add);
 
-  platform.linAlg().InitKernels(
-      {"set", "sum", "norm2", "min", "max", "add"});
+  platform.linAlg().InitKernels({"set", "sum", "norm2", "min", "max", "add"});
 
   // FOR THIS - WE ASSUME IPDG  and LAMBDA=1
   Nfields = 1;
@@ -90,18 +87,12 @@ void wave_t::Setup(platform_t&     _platform,
   // L stiffness matrix, M mass matrix
   // find stiffness matirx ??
   lambdaSolve = 1;
-  elliptic.Setup(platform,
-                 mesh,
-                 ellipticSettings,
-                 lambdaSolve,
-                 NBCTypes,
-                 BCType);
+  elliptic.Setup(
+      platform, mesh, ellipticSettings, lambdaSolve, NBCTypes, BCType);
 
   // find out if this is a C0 discretization
-  disc_c0 = elliptic.settings.compareSetting(
-                "DISCRETIZATION", "CONTINUOUS")
-                ? 1
-                : 0;
+  disc_c0 =
+      elliptic.settings.compareSetting("DISCRETIZATION", "CONTINUOUS") ? 1 : 0;
 
   if(disc_c0 == 1 && mesh.elementType == Mesh::TRIANGLES) {
     std::cout << "TRYING TO USE TRIANGLE MESH WITH C0 NOT "
@@ -111,10 +102,9 @@ void wave_t::Setup(platform_t&     _platform,
   }
 
   if(disc_c0 == 1 && mesh.elementType == Mesh::TETRAHEDRA) {
-    std::cout
-        << "TRYING TO USE TETRAHEDRA MESH WITH C0 NOT ALLOWED WITH
+    std::cout << "TRYING TO USE TETRAHEDRA MESH WITH C0 NOT ALLOWED WITH
         WAVE "
-        << std::endl;
+              << std::endl;
     exit(-1);
   }
 
@@ -138,9 +128,7 @@ void wave_t::Setup(platform_t&     _platform,
   esdirkC.reshape(1, Nstages);
 
   for(int n = 1; n <= Nstages; ++n) {
-    for(int m = 1; m <= Nstages; ++m) {
-      alpha(n, m) = BTABLE(n, m + 1);
-    }
+    for(int m = 1; m <= Nstages; ++m) { alpha(n, m) = BTABLE(n, m + 1); }
     beta(1, n) = BTABLE(Nstages + 1, n + 1);
 
     if(embedded) betahat(1, n) = BTABLE(Nstages + 2, n + 1);
@@ -148,9 +136,7 @@ void wave_t::Setup(platform_t&     _platform,
   }
 
   // why do this ??
-  for(int m = 1; m <= Nstages; ++m) {
-    alpha(Nstages + 1, m) = beta(1, m);
-  }
+  for(int m = 1; m <= Nstages; ++m) { alpha(Nstages + 1, m) = beta(1, m); }
 
   gamma    = alpha(2, 2);
   invGamma = 1. / gamma;
@@ -186,13 +172,10 @@ void wave_t::Setup(platform_t&     _platform,
   // set alphatilde(1, 1) = 0.
   // and gammatilde(1, 1) = 1.
   for(int i = 0; i <= Nstages - 1; ++i) {
-    for(int j = 1; j <= i; ++i) {
-      alphatilde(i + 1, j) += alpha(i + 1, j);
-    }
+    for(int j = 1; j <= i; ++i) { alphatilde(i + 1, j) += alpha(i + 1, j); }
     for(int j = 1; j <= i; ++j) {
       for(int k = 1; k <= j; ++k) {
-        alphatilde(i + 1, k) +=
-            alpha(i + 1, j) * alpha(j, k) / gamma;
+        alphatilde(i + 1, k) += alpha(i + 1, j) * alpha(j, k) / gamma;
       }
     }
     gammatilde(1, i + 1) = 1.;
@@ -256,8 +239,7 @@ void wave_t::Setup(platform_t&     _platform,
       }
     }
   } else if(mesh.elementType == Mesh::TETRAHEDRA) {
-    mesh.VandermondeTet3D(
-        mesh.N, mesh.r, mesh.s, mesh.t, V);
+    mesh.VandermondeTet3D(mesh.N, mesh.r, mesh.s, mesh.t, V);
     mesh.invMassMatrixTet3D(mesh.Np, V, invMM);
     mesh.MassMatrixTet3D(mesh.Np, V, MM);
   } else {
@@ -268,8 +250,7 @@ void wave_t::Setup(platform_t&     _platform,
     for(int k = 0; k < mesh.Nq; ++k) {
       for(int j = 0; j < mesh.Nq; ++j) {
         for(int i = 0; i < mesh.Nq; ++i) {
-          MM[cnt] =
-              mesh.gllw[i] * mesh.gllw[j] * mesh.gllw[k];
+          MM[cnt]    = mesh.gllw[i] * mesh.gllw[j] * mesh.gllw[k];
           invMM[cnt] = 1. / MM[cnt];
           printf("MM[%d]=%g\n", cnt, MM[cnt]);
           ++cnt;
@@ -278,9 +259,8 @@ void wave_t::Setup(platform_t&     _platform,
     }
   }
 
-  o_invMM =
-      platform.malloc<dfloat>(mesh.Np * mesh.Np, invMM);
-  o_MM = platform.malloc<dfloat>(mesh.Np * mesh.Np, MM);
+  o_invMM = platform.malloc<dfloat>(mesh.Np * mesh.Np, invMM);
+  o_MM    = platform.malloc<dfloat>(mesh.Np * mesh.Np, MM);
 
   // triangle specific
   if(mesh.elementType == Mesh::TRIANGLES ||
@@ -293,23 +273,16 @@ void wave_t::Setup(platform_t&     _platform,
       WJ[e]    = mesh.wJ[e];
     }
 
-    o_invWJ =
-        platform.malloc<dfloat>(mesh.Nelements, invWJ);
-    o_WJ = platform.malloc<dfloat>(mesh.Nelements, WJ);
+    o_invWJ = platform.malloc<dfloat>(mesh.Nelements, invWJ);
+    o_WJ    = platform.malloc<dfloat>(mesh.Nelements, WJ);
   } else {
     // use ungathered weights in WJ on device
     WJ.malloc(mesh.Np * mesh.Nelements);
-    for(int n = 0; n < mesh.Np * mesh.Nelements; ++n) {
-      WJ[n] = mesh.wJ[n];
-    }
-    o_WJ = platform.malloc<dfloat>(mesh.Nelements * mesh.Np,
-                                   WJ);
+    for(int n = 0; n < mesh.Np * mesh.Nelements; ++n) { WJ[n] = mesh.wJ[n]; }
+    o_WJ = platform.malloc<dfloat>(mesh.Nelements * mesh.Np, WJ);
 
     // gather weights for C0
-    if(disc_c0) {
-      elliptic.ogsMasked.GatherScatter(
-          WJ, 1, ogs::Add, ogs::Sym);
-    }
+    if(disc_c0) { elliptic.ogsMasked.GatherScatter(WJ, 1, ogs::Add, ogs::Sym); }
 
     // use globalized mass for C0
     invWJ.malloc(mesh.Np * mesh.Nelements);
@@ -317,7 +290,6 @@ void wave_t::Setup(platform_t&     _platform,
       invWJ[n] = (WJ[n]) ? 1. / WJ[n] : 0;
     }
 
-    o_invWJ = platform.malloc<dfloat>(
-        mesh.Nelements * mesh.Np, invWJ);
+    o_invWJ = platform.malloc<dfloat>(mesh.Nelements * mesh.Np, invWJ);
   }
 }

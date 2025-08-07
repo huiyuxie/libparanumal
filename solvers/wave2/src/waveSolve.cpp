@@ -40,10 +40,8 @@ void diagnostic(dlong                 N,
                 const char*           message) {
   dfloat normx = platform.linAlg().norm2(N, o_x, mesh.comm);
 
-  std::cout << std::scientific << std::setw(10)
-            << std::endl;
-  std::cout << "norm(" << message << ")=" << normx
-            << std::endl;
+  std::cout << std::scientific << std::setw(10) << std::endl;
+  std::cout << "norm(" << message << ")=" << normx << std::endl;
 }
 
 // wave solver2
@@ -55,16 +53,14 @@ void wave_t::Solve(deviceMemory<dfloat>& o_rDL,
   std::cout << "iostep = " << iostep << std::endl;
 
   linAlgMatrix_t<dfloat> filtD(1, Nstages);
-  deviceMemory<dfloat>   o_filtD =
-      platform.malloc<dfloat>(Nstages);
+  deviceMemory<dfloat>   o_filtD = platform.malloc<dfloat>(Nstages);
 
   deviceMemory<dfloat> o_SurfaceForceL =
       platform.malloc<dfloat>(mesh.Np * mesh.Nelements);
 
   dlong cumIter = 0;
 
-  for(int tstep = 0; tstep < Nsteps;
-      ++tstep) { // do adaptive later
+  for(int tstep = 0; tstep < Nsteps; ++tstep) { // do adaptive later
     int iter = 0;
 
     dfloat t = tstep * dt;
@@ -87,21 +83,9 @@ void wave_t::Solve(deviceMemory<dfloat>& o_rDL,
                              o_PhatL,
                              o_DrhsL);
 
-    diagnostic(mesh.Nelements * mesh.Np,
-               mesh,
-               platform,
-               o_DL,
-               "DL");
-    diagnostic(mesh.Nelements * mesh.Np,
-               mesh,
-               platform,
-               o_PL,
-               "PL");
-    diagnostic(mesh.Nelements * mesh.Np,
-               mesh,
-               platform,
-               o_DrhsL,
-               "DrhsL");
+    diagnostic(mesh.Nelements * mesh.Np, mesh, platform, o_DL, "DL");
+    diagnostic(mesh.Nelements * mesh.Np, mesh, platform, o_PL, "PL");
+    diagnostic(mesh.Nelements * mesh.Np, mesh, platform, o_DrhsL, "DrhsL");
 
     // LOOP OVER IMPLICIT STAGES
     for(int stage = 2; stage <= Nstages; ++stage) {
@@ -129,16 +113,11 @@ void wave_t::Solve(deviceMemory<dfloat>& o_rDL,
       // record local RHS
       if(esc) esc->setLocalRHS(o_DrhsL);
 
-      diagnostic(mesh.Nelements * mesh.Np,
-                 mesh,
-                 platform,
-                 o_DrhsL,
-                 "DrhsL");
+      diagnostic(mesh.Nelements * mesh.Np, mesh, platform, o_DrhsL, "DrhsL");
 
       // gather rhs to globalDofs if c0
       if(disc_c0) {
-        elliptic.ogsMasked.Gather(
-            o_Drhs, o_DrhsL, 1, ogs::Add, ogs::Trans);
+        elliptic.ogsMasked.Gather(o_Drhs, o_DrhsL, 1, ogs::Add, ogs::Trans);
         elliptic.ogsMasked.Gather(
             o_Dtilde, o_DtildeL, 1, ogs::Add, ogs::NoTrans);
       } else {
@@ -158,17 +137,13 @@ void wave_t::Solve(deviceMemory<dfloat>& o_rDL,
 
       if(disc_c0) {
         // scatter x to LocalDofs if c0
-        elliptic.ogsMasked.Scatter(
-            o_DtildeL, o_Dtilde, 1, ogs::NoTrans);
+        elliptic.ogsMasked.Scatter(o_DtildeL, o_Dtilde, 1, ogs::NoTrans);
       } else {
         o_Dtilde.copyTo(o_DtildeL);
       }
 
-      diagnostic(mesh.Nelements * mesh.Np,
-                 mesh,
-                 platform,
-                 o_DtildeL,
-                 "DtildeL");
+      diagnostic(
+          mesh.Nelements * mesh.Np, mesh, platform, o_DtildeL, "DtildeL");
 
       iter += iterD;
 
@@ -202,33 +177,21 @@ void wave_t::Solve(deviceMemory<dfloat>& o_rDL,
     // D = Dhat(:,1) + dt*LAP*(Phat(:,1:Nstages)*beta');
 
     // a. Phat(:,1:Nstages)*beta' => o_scratchL
-    waveCombineKernel(Nall,
-                      Nstages,
-                      dt,
-                      o_beta,
-                      o_betaAlpha,
-                      o_PhatL,
-                      o_DhatL,
-                      o_scratch1L);
+    waveCombineKernel(
+        Nall, Nstages, dt, o_beta, o_betaAlpha, o_PhatL, o_DhatL, o_scratch1L);
 
     // b. L*(Phat(:,1:Nstages)*beta') => o_rDL
     elliptic.lambda = 0;
     if(disc_c0) {
       // gather up RHS
-      elliptic.ogsMasked.Gather(o_scratch1,
-                                o_scratch1L,
-                                1,
-                                ogs::Add,
-                                ogs::NoTrans);
+      elliptic.ogsMasked.Gather(
+          o_scratch1, o_scratch1L, 1, ogs::Add, ogs::NoTrans);
       elliptic.Operator(o_scratch1, o_scratch2);
-      elliptic.ogsMasked.Scatter(
-          o_scratch2L, o_scratch2, 1, ogs::NoTrans);
+      elliptic.ogsMasked.Scatter(o_scratch2L, o_scratch2, 1, ogs::NoTrans);
     } else {
-      std::cout << "waveSolve calling  elliptic Operator"
-                << std::endl;
+      std::cout << "waveSolve calling  elliptic Operator" << std::endl;
       elliptic.Operator(o_scratch1L, o_scratch2L);
-      std::cout << "waveSolve finished elliptic Operator"
-                << std::endl;
+      std::cout << "waveSolve finished elliptic Operator" << std::endl;
     }
     elliptic.lambda = lambdaSolve;
 
@@ -238,8 +201,7 @@ void wave_t::Solve(deviceMemory<dfloat>& o_rDL,
                o_scratch2L,
                "M*OP*scratch1L");
 
-    dfloat sigmaF = 0, omegaF = 0, lambdaF = 1.,
-           scaleF = -1. / dt;
+    dfloat sigmaF = 0, omegaF = 0, lambdaF = 1., scaleF = -1. / dt;
     waveForcingKernel(mesh.Nelements,
                       Nstages,
                       Nstages + 1,
@@ -289,10 +251,10 @@ void wave_t::Solve(deviceMemory<dfloat>& o_rDL,
 
     timePoint_t ends = GlobalPlatformTime(platform);
 
-    dfloat normP = platform.linAlg().norm2(
-        mesh.Np * mesh.Nelements, o_rPL, mesh.comm);
-    dfloat normD = platform.linAlg().norm2(
-        mesh.Np * mesh.Nelements, o_rDL, mesh.comm);
+    dfloat normP =
+        platform.linAlg().norm2(mesh.Np * mesh.Nelements, o_rPL, mesh.comm);
+    dfloat normD =
+        platform.linAlg().norm2(mesh.Np * mesh.Nelements, o_rDL, mesh.comm);
 
     printf("====> time=%g, dt=%g, step=%d, sum(iterD)=%d, "
            "ave(iterD)=%3.2f, "
@@ -308,8 +270,7 @@ void wave_t::Solve(deviceMemory<dfloat>& o_rDL,
     double elapsedTime = ElapsedTime(starts, ends);
 
     if((mesh.rank == 0) && verbose) {
-      printf("%d, " hlongFormat
-             ", %g, %d, %g, %g; global: N, dofs, elapsed, "
+      printf("%d, " hlongFormat ", %g, %d, %g, %g; global: N, dofs, elapsed, "
              "iterations, time per "
              "node, nodes*iterations/time %s\n",
              mesh.N,
@@ -318,14 +279,11 @@ void wave_t::Solve(deviceMemory<dfloat>& o_rDL,
              iter,
              elapsedTime / (NglobalDofs),
              NglobalDofs * ((dfloat)iter / elapsedTime),
-             (char*)elliptic.settings
-                 .getSetting("PRECONDITIONER")
-                 .c_str());
+             (char*)elliptic.settings.getSetting("PRECONDITIONER").c_str());
     }
 
     if(1)
-      if(settings.compareSetting("OUTPUT TO FILE",
-                                 "TRUE")) {
+      if(settings.compareSetting("OUTPUT TO FILE", "TRUE")) {
         static int slice = 0;
         if(tstep == 0 || ((tstep + 1) % iostep) == 0) {
           // copy data back to host
@@ -336,8 +294,7 @@ void wave_t::Solve(deviceMemory<dfloat>& o_rDL,
           std::string name;
           settings.getSetting("OUTPUT FILE NAME", name);
           char fname[BUFSIZ];
-          sprintf(
-              fname, "DP_%04d_%04d.vtu", mesh.rank, slice);
+          sprintf(fname, "DP_%04d_%04d.vtu", mesh.rank, slice);
           PlotFields(DL, PL, fname);
 
           ++slice;
@@ -348,13 +305,11 @@ void wave_t::Solve(deviceMemory<dfloat>& o_rDL,
     settings.getSetting("OUTPUT ERROR INTERVAL", errorStep);
     if(errorStep > 0 && tstep > 0) {
       if((tstep % errorStep) == 0) {
-        ReportError(
-            t + dt, elapsedTime, iter, o_rDL, o_rPL);
+        ReportError(t + dt, elapsedTime, iter, o_rDL, o_rPL);
       }
     }
   }
 
-  std::cout << "time=" << Nsteps * dt
-            << ", Cumulative iterations: " << cumIter
+  std::cout << "time=" << Nsteps * dt << ", Cumulative iterations: " << cumIter
             << std::endl;
 }

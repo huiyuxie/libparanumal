@@ -47,8 +47,7 @@ int main(int argc, char** argv) {
     waveSettings_t     waveSettings(comm);
 
     // load settings from file
-    waveSettings.parseFromFile(
-        platformSettings, meshSettings, argv[1]);
+    waveSettings.parseFromFile(platformSettings, meshSettings, argv[1]);
 
     // set up platform
     platform_t platform(platformSettings);

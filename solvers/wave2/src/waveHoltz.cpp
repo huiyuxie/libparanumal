@@ -49,9 +49,8 @@ void wave_t::waveHoltz(deviceMemory<dfloat>& o_qL) {
       Nall, Nhalo, platform, elliptic.settings, comm);
 
   // configure linear solver to use zero initial guess
-  waveHoltzLinearSolver
-      .SetupInitialGuess<InitialGuess::Last<dfloat>>(
-          Nall, platform, elliptic.settings, comm);
+  waveHoltzLinearSolver.SetupInitialGuess<InitialGuess::Last<dfloat>>(
+      Nall, platform, elliptic.settings, comm);
 
   // compute RHS (this will work for IPDG for now)
   deviceMemory<dfloat> o_bL = platform.malloc<dfloat>(Nall);
@@ -75,15 +74,14 @@ void wave_t::waveHoltz(deviceMemory<dfloat>& o_qL) {
 
   stoppingCriteria_t<dfloat>* waveHoltzStoppingCriteria =
       new stoppingCriteria_t<dfloat>();
-  int iterD = waveHoltzLinearSolver.Solve(
-      *this,
-      waveHoltzPrecon,
-      o_qL,
-      o_bL,
-      tol,
-      maxIter,
-      verbose,
-      waveHoltzStoppingCriteria);
+  int iterD = waveHoltzLinearSolver.Solve(*this,
+                                          waveHoltzPrecon,
+                                          o_qL,
+                                          o_bL,
+                                          tol,
+                                          maxIter,
+                                          verbose,
+                                          waveHoltzStoppingCriteria);
 
   std::cout << " WOWSA " << std::endl;
 

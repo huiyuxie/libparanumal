@@ -33,25 +33,13 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   { f = 0.; }
 
 /* Homogeneous Dirichlet boundary condition   */
-#define ellipticDirichletCondition3D(x,   \
-                                     y,   \
-                                     z,   \
-                                     nx,  \
-                                     ny,  \
-                                     nz,  \
-                                     uM,  \
-                                     uxM, \
-                                     uyM, \
-                                     uzM, \
-                                     uB,  \
-                                     uxB, \
-                                     uyB, \
-                                     uzB) \
-  {                                       \
-    uB  = 0.f;                            \
-    uxB = uxM;                            \
-    uyB = uyM;                            \
-    uzB = uzM;                            \
+#define ellipticDirichletCondition3D(                          \
+    x, y, z, nx, ny, nz, uM, uxM, uyM, uzM, uB, uxB, uyB, uzB) \
+  {                                                            \
+    uB  = 0.f;                                                 \
+    uxB = uxM;                                                 \
+    uyB = uyM;                                                 \
+    uzB = uzM;                                                 \
   }
 
 /* Homogeneous Neumann boundary condition   */

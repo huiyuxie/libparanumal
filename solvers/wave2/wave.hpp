@@ -104,8 +104,7 @@ class wave_t : public solver_t {
   memory<int>       patchLabels;
   deviceMemory<int> o_EToPatch;
 
-  linAlgMatrix_t<dfloat> alpha, beta, betahat, esdirkC,
-      alphatilde, gammatilde;
+  linAlgMatrix_t<dfloat> alpha, beta, betahat, esdirkC, alphatilde, gammatilde;
 
   deviceMemory<dfloat> o_alphatilde;
   deviceMemory<dfloat> o_gammatilde;
@@ -172,16 +171,12 @@ class wave_t : public solver_t {
   kernel_t waveSurfaceSourceKernel;
 
   wave_t() = default;
-  wave_t(platform_t&     _platform,
-         mesh_t&         _mesh,
-         waveSettings_t& _settings) {
+  wave_t(platform_t& _platform, mesh_t& _mesh, waveSettings_t& _settings) {
     Setup(_platform, _mesh, _settings);
   }
 
   // setup
-  void Setup(platform_t&     _platform,
-             mesh_t&         _mesh,
-             waveSettings_t& _settings);
+  void Setup(platform_t& _platform, mesh_t& _mesh, waveSettings_t& _settings);
 
   void Solve(deviceMemory<dfloat>& _o_DL,
              deviceMemory<dfloat>& _o_PL,
@@ -192,8 +187,7 @@ class wave_t : public solver_t {
   //               deviceMemory<dfloat> &_o_PL,
   //               deviceMemory<dfloat> &_o_FL);
 
-  void Operator(deviceMemory<dfloat>& inPL,
-                deviceMemory<dfloat>& outPL);
+  void Operator(deviceMemory<dfloat>& inPL, deviceMemory<dfloat>& outPL);
 
   void waveHoltz(deviceMemory<dfloat>& o_qL);
   // skip v2 for now
