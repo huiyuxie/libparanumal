@@ -27,67 +27,74 @@ SOFTWARE.
 #include "wave.hpp"
 
 // interpolate data to plot nodes and save to file (one per process
-void wave_t::PlotFields(libp::memory<dfloat>& D, libp::memory<dfloat>& P, std::string fileName){
+void wave_t::PlotFields(libp::memory<dfloat>& D,
+                        libp::memory<dfloat>& P,
+                        std::string           fileName) {
 
-  FILE *fp;
+  FILE* fp;
 
   fp = fopen(fileName.c_str(), "w");
 
-  fprintf(fp, "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" byte_order=\"BigEndian\">\n");
+  fprintf(fp,
+          "<VTKFile type=\"UnstructuredGrid\" version=\"0.1\" "
+          "byte_order=\"BigEndian\">\n");
   fprintf(fp, "  <UnstructuredGrid>\n");
-  fprintf(fp, "    <Piece NumberOfPoints=\"%d\" NumberOfCells=\"%d\">\n",
-          mesh.Nelements*mesh.plotNp,
-          mesh.Nelements*mesh.plotNelements);
+  fprintf(fp,
+          "    <Piece NumberOfPoints=\"%d\" NumberOfCells=\"%d\">\n",
+          mesh.Nelements * mesh.plotNp,
+          mesh.Nelements * mesh.plotNelements);
 
   // write out nodes
   fprintf(fp, "      <Points>\n");
-  fprintf(fp, "        <DataArray type=\"Float32\" NumberOfComponents=\"3\" Format=\"ascii\">\n");
+  fprintf(fp,
+          "        <DataArray type=\"Float32\" NumberOfComponents=\"3\" "
+          "Format=\"ascii\">\n");
 
-  //scratch space for interpolation
-  size_t Nscratch = std::max(mesh.Np, mesh.plotNp);
-  memory<dfloat> scratch(2*Nscratch);
+  // scratch space for interpolation
+  size_t         Nscratch = std::max(mesh.Np, mesh.plotNp);
+  memory<dfloat> scratch(2 * Nscratch);
 
   memory<dfloat> Ix(mesh.plotNp);
   memory<dfloat> Iy(mesh.plotNp);
   memory<dfloat> Iz(mesh.plotNp);
 
   // compute plot node coordinates on the fly
-  for(dlong e=0;e<mesh.Nelements;++e){
-    mesh.PlotInterp(mesh.x + e*mesh.Np, Ix, scratch);
-    mesh.PlotInterp(mesh.y + e*mesh.Np, Iy, scratch);
-    if(mesh.dim==3)
-      mesh.PlotInterp(mesh.z + e*mesh.Np, Iz, scratch);
+  for(dlong e = 0; e < mesh.Nelements; ++e) {
+    mesh.PlotInterp(mesh.x + e * mesh.Np, Ix, scratch);
+    mesh.PlotInterp(mesh.y + e * mesh.Np, Iy, scratch);
+    if(mesh.dim == 3) mesh.PlotInterp(mesh.z + e * mesh.Np, Iz, scratch);
 
-    if (mesh.dim==2) {
-      for(int n=0;n<mesh.plotNp;++n){
+    if(mesh.dim == 2) {
+      for(int n = 0; n < mesh.plotNp; ++n) {
         fprintf(fp, "       ");
-        fprintf(fp, "%f %f %f\n", Ix[n],Iy[n],0.0);
+        fprintf(fp, "%f %f %f\n", Ix[n], Iy[n], 0.0);
       }
     } else {
-      for(int n=0;n<mesh.plotNp;++n){
+      for(int n = 0; n < mesh.plotNp; ++n) {
         fprintf(fp, "       ");
-        fprintf(fp, "%f %f %f\n", Ix[n],Iy[n],Iz[n]);
+        fprintf(fp, "%f %f %f\n", Ix[n], Iy[n], Iz[n]);
       }
     }
   }
   fprintf(fp, "        </DataArray>\n");
   fprintf(fp, "      </Points>\n");
 
-  memory<dfloat> Iq(mesh.plotNp*2);
+  memory<dfloat> Iq(mesh.plotNp * 2);
 
   // write out fields
   fprintf(fp, "      <PointData Scalars=\"scalars\">\n");
-  fprintf(fp, "        <DataArray type=\"Float32\" Name=\"P\" NumberOfComponents=\"%d\" Format=\"ascii\">\n",
+  fprintf(fp,
+          "        <DataArray type=\"Float32\" Name=\"P\" "
+          "NumberOfComponents=\"%d\" Format=\"ascii\">\n",
           2);
-  for(dlong e=0;e<mesh.Nelements;++e){
-    
-    mesh.PlotInterp(P + e*mesh.Np, Iq + 0*mesh.plotNp, scratch);
-    mesh.PlotInterp(D + e*mesh.Np, Iq + 1*mesh.plotNp, scratch);
-    
-    for(int n=0;n<mesh.plotNp;++n){
+  for(dlong e = 0; e < mesh.Nelements; ++e) {
+
+    mesh.PlotInterp(P + e * mesh.Np, Iq + 0 * mesh.plotNp, scratch);
+    mesh.PlotInterp(D + e * mesh.Np, Iq + 1 * mesh.plotNp, scratch);
+
+    for(int n = 0; n < mesh.plotNp; ++n) {
       fprintf(fp, "       ");
-      for (int f=0;f<2;f++)
-        fprintf(fp, "%f ", Iq[n+f*mesh.plotNp]);
+      for(int f = 0; f < 2; f++) fprintf(fp, "%f ", Iq[n + f * mesh.plotNp]);
       fprintf(fp, "\n");
     }
   }
@@ -95,23 +102,29 @@ void wave_t::PlotFields(libp::memory<dfloat>& D, libp::memory<dfloat>& P, std::s
   fprintf(fp, "     </PointData>\n");
 
   fprintf(fp, "    <Cells>\n");
-  fprintf(fp, "      <DataArray type=\"Int64\" Name=\"connectivity\" Format=\"ascii\">\n");
+  fprintf(fp,
+          "      <DataArray type=\"Int64\" Name=\"connectivity\" "
+          "Format=\"ascii\">\n");
 
-  for(dlong e=0;e<mesh.Nelements;++e){
-    for(int n=0;n<mesh.plotNelements;++n){
+  for(dlong e = 0; e < mesh.Nelements; ++e) {
+    for(int n = 0; n < mesh.plotNelements; ++n) {
       fprintf(fp, "       ");
-      for(int m=0;m<mesh.plotNverts;++m){
-        fprintf(fp, "%d ", e*mesh.plotNp + mesh.plotEToV[n*mesh.plotNverts+m]);
+      for(int m = 0; m < mesh.plotNverts; ++m) {
+        fprintf(fp,
+                "%d ",
+                e * mesh.plotNp + mesh.plotEToV[n * mesh.plotNverts + m]);
       }
       fprintf(fp, "\n");
     }
   }
   fprintf(fp, "        </DataArray>\n");
 
-  fprintf(fp, "        <DataArray type=\"Int64\" Name=\"offsets\" Format=\"ascii\">\n");
+  fprintf(
+      fp,
+      "        <DataArray type=\"Int64\" Name=\"offsets\" Format=\"ascii\">\n");
   dlong cnt = 0;
-  for(dlong e=0;e<mesh.Nelements;++e){
-    for(int n=0;n<mesh.plotNelements;++n){
+  for(dlong e = 0; e < mesh.Nelements; ++e) {
+    for(int n = 0; n < mesh.plotNelements; ++n) {
       cnt += mesh.plotNverts;
       fprintf(fp, "       ");
       fprintf(fp, "%d\n", cnt);
@@ -119,10 +132,12 @@ void wave_t::PlotFields(libp::memory<dfloat>& D, libp::memory<dfloat>& P, std::s
   }
   fprintf(fp, "       </DataArray>\n");
 
-  fprintf(fp, "       <DataArray type=\"Int64\" Name=\"types\" Format=\"ascii\">\n");
-  for(dlong e=0;e<mesh.Nelements;++e){
-    for(int n=0;n<mesh.plotNelements;++n){
-      if(mesh.dim==2)
+  fprintf(
+      fp,
+      "       <DataArray type=\"Int64\" Name=\"types\" Format=\"ascii\">\n");
+  for(dlong e = 0; e < mesh.Nelements; ++e) {
+    for(int n = 0; n < mesh.plotNelements; ++n) {
+      if(mesh.dim == 2)
         fprintf(fp, "5\n");
       else
         fprintf(fp, "10\n");

@@ -26,25 +26,24 @@ SOFTWARE.
 
 #include "wave.hpp"
 
-int main(int argc, char **argv){
+int main(int argc, char** argv) {
 
   // start up MPI
   Comm::Init(argc, argv);
 
-  LIBP_ABORT("Usage: ./waveMain setupfile", argc!=2);
+  LIBP_ABORT("Usage: ./waveMain setupfile", argc != 2);
 
   { /*Scope so everything is destructed before MPI_Finalize */
     comm_t comm(Comm::World().Dup());
 
-    //create default settings
+    // create default settings
     platformSettings_t platformSettings(comm);
-    meshSettings_t meshSettings(comm);
-    waveSettings_t waveSettings(comm);
+    meshSettings_t     meshSettings(comm);
+    waveSettings_t     waveSettings(comm);
 
-    //load settings from file
-    waveSettings.parseFromFile(platformSettings, meshSettings,
-                               argv[1]);
-    
+    // load settings from file
+    waveSettings.parseFromFile(platformSettings, meshSettings, argv[1]);
+
     // set up platform
     platform_t platform(platformSettings);
 

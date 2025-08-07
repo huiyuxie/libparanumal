@@ -26,23 +26,24 @@ SOFTWARE.
 
 #include "wave.hpp"
 
-void wave_t::Report(dfloat time, int tstep){
+void wave_t::Report(dfloat time, int tstep) {
 
-  static int frame=0;
+  static int frame = 0;
 
-  //compute U.M*U
-  dlong Nentries = mesh.Nelements*mesh.Np;
+  // compute U.M*U
+  dlong Nentries = mesh.Nelements * mesh.Np;
 
   deviceMemory<dfloat> o_MP = platform.reserve<dfloat>(Nentries);
   mesh.MassMatrixApply(o_PL, o_MP);
 
-  dfloat norm2 = sqrt(platform.linAlg().innerProd(Nentries, o_PL, o_MP, mesh.comm));
+  dfloat norm2 =
+      sqrt(platform.linAlg().innerProd(Nentries, o_PL, o_MP, mesh.comm));
   o_MP.free();
 
-  if(mesh.rank==0)
+  if(mesh.rank == 0)
     printf("\n%5.2f (%d), %5.2f (time, timestep, norm)\n", time, tstep, norm2);
 
-  if (settings.compareSetting("OUTPUT TO FILE","TRUE")) {
+  if(settings.compareSetting("OUTPUT TO FILE", "TRUE")) {
 
     // copy data back to host
     o_PL.copyTo(PL);
