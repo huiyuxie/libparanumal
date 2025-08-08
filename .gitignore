@@ -36,3 +36,7 @@ test/*.rc
 
 .vimrc
 .occa/
+
+.vscode/
+*.bin
+.clang-format
