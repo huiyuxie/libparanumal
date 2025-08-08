@@ -69,6 +69,7 @@ void wave_t::ReportError(dfloat                t,
 
   dfloat errPL2 = 0, errDL2 = 0;
   dfloat normExactPL2 = 0, normExactDL2 = 0;
+
   // change for other elements
   if(mesh.elementType == Mesh::TRIANGLES ||
      mesh.elementType == Mesh::TETRAHEDRA) {
@@ -112,9 +113,61 @@ void wave_t::ReportError(dfloat                t,
   dfloat relErrDL2 = sqrt(errDL2 / (eps + normExactDL2));
   dfloat relErrPL2 = sqrt(errPL2 / (eps + normExactPL2));
 
-  std::cout << t << "," << mesh.N << ", " << mesh.Nelements << ", " << dt
-            << ", " << iterations << ", " << relErrDL2 << ", " << relErrPL2
-            << ", " << elapsedTime
-            << "; %% t, N, Nelements, dt, relErrDL2, relErrPL2, elapsedTime"
+  std::cout << "\nError Report\n";
+  std::cout << std::string(90, '=') << std::endl;
+
+  std::cout << std::left << std::setw(11) << "t" << std::setw(6) << "N"
+            << std::setw(11) << "Nelements" << std::setw(11) << "dt"
+            << std::setw(12) << "iterations" << std::setw(14) << "relErrDL2"
+            << std::setw(14) << "relErrPL2" << std::setw(12) << "elapsedTime"
             << std::endl;
+
+  std::cout << std::string(90, '-') << std::endl;
+
+  std::cout << std::fixed << std::setprecision(6) << std::left << std::setw(11)
+            << t << std::setw(6) << mesh.N << std::setw(11) << mesh.Nelements
+            << std::setw(11) << dt << std::setw(12) << iterations
+            << std::setw(14) << relErrDL2 << std::setw(14) << relErrPL2
+            << std::setw(12) << elapsedTime << std::endl;
+}
+
+void wave_t::ReportGlobalError(dfloat                t,
+                               deviceMemory<dfloat>& o_DLin,
+                               deviceMemory<dfloat>& o_PLin) {
+
+  memory<dfloat> DLin(Nall);
+  memory<dfloat> PLin(Nall);
+
+  deviceMemory<dfloat> o_exactDL = platform.malloc<dfloat>(Nall);
+  deviceMemory<dfloat> o_exactPL = platform.malloc<dfloat>(Nall);
+
+  memory<dfloat> exactDL(Nall);
+  memory<dfloat> exactPL(Nall);
+
+  waveInitialConditionsKernel(
+      Nall, t, mesh.o_x, mesh.o_y, mesh.o_z, o_exactDL, o_exactPL);
+
+  o_exactDL.copyTo(exactDL);
+  o_exactPL.copyTo(exactPL);
+
+  o_DLin.copyTo(DLin);
+  o_PLin.copyTo(PLin);
+
+  dfloat errPL2 = 0, errDL2 = 0;
+
+  // for Quad2D and Hex3D
+  if(mesh.elementType == Mesh::QUADRILATERALS ||
+     mesh.elementType == Mesh::HEXAHEDRA) {
+    for(dlong e = 0; e < mesh.Nelements; ++e) {
+      for(int n = 0; n < mesh.Np; ++n) {
+        dlong  idn = e * mesh.Np + n;
+        dfloat WJn = WJ[idn];
+        errPL2 += WJn * pow(PLin[idn] - exactPL[idn], 2);
+        errDL2 += WJn * pow(DLin[idn] - exactDL[idn], 2);
+      }
+    }
+  }
+
+  this->L2ErrP = sqrt(errPL2);
+  this->L2ErrD = sqrt(errDL2);
 }

@@ -36,180 +36,178 @@
 #include "elliptic.hpp"
 #include "initialGuess.hpp"
 
-
-#define DWAVE LIBP_DIR"/solvers/wave/"
+#define DWAVE LIBP_DIR "/solvers/wave/"
 
 using namespace libp;
 
-class waveSettings_t: public settings_t {
-public:
+class waveSettings_t : public settings_t {
+  public:
   waveSettings_t(comm_t& _comm);
   void report();
   void parseFromFile(platformSettings_t& platformSettings,
-                     meshSettings_t& meshSettings,
-                     const std::string filename);
+                     meshSettings_t&     meshSettings,
+                     const std::string   filename);
 
-   ellipticSettings_t extractEllipticSettings();
+  ellipticSettings_t extractEllipticSettings();
 };
 
-class wave_t: public solver_t {
-public:
-   
-   mesh_t mesh;
-   
-   ellipticSettings_t ellipticSettings;
-   elliptic_t elliptic;
-   
-   linearSolver_t<dfloat>  linearSolver;
+class wave_t : public solver_t {
+  public:
+  mesh_t mesh;
 
-   int Nfields=1;
-   int disc_c0=0;
-   
-   int Niter;
-   int iostep;
-   int maxIter;
-   int verbose;
-   dfloat tol;
-   
-   dlong Nall;
-   dlong NglobalDofs;
-   
-   dfloat ellipticTOL;
-   dfloat tau;
+  ellipticSettings_t ellipticSettings;
+  elliptic_t         elliptic;
 
-   int Nstages;
-   int embedded;
-   dfloat gamma;
-   dfloat invGamma;
-   dfloat invGammaDt;
-   dfloat invDt;
-   int Nsteps;
-   dfloat dt;
-   dfloat startTime;
-   dfloat finalTime;
-   
-   dfloat lambdaSolve;
-   dfloat omega;
-   dfloat sigma;
+  linearSolver_t<dfloat> linearSolver;
 
-   /* flux source info */
-   dfloat xsource;
-   dfloat ysource;
-   dfloat zsource;
-   dfloat fsource;
+  int Nfields = 1;
+  int disc_c0 = 0;
 
-   memory<int> patchLabels;
-   deviceMemory<int>o_EToPatch;
-   
-   linAlgMatrix_t<dfloat> alpha, beta, betahat, esdirkC, alphatilde, gammatilde;
-   
-   deviceMemory<dfloat> o_alphatilde;
-   deviceMemory<dfloat> o_gammatilde;
-   deviceMemory<dfloat> o_betatilde;
-   deviceMemory<dfloat> o_betahattilde;
-   deviceMemory<dfloat> o_alpha;
-   deviceMemory<dfloat> o_beta;
-   deviceMemory<dfloat> o_betaAlpha;
-   deviceMemory<dfloat> o_betahatAlpha;
-   deviceMemory<dfloat> o_betahat;
-   deviceMemory<dfloat> o_gamma;
-   deviceMemory<dfloat> o_esdirkC;
-   
-   
-   memory<dfloat> DL;
-   memory<dfloat> PL;
-   memory<dfloat> DrhsL;
-   memory<dfloat> DhatL;
-   memory<dfloat> PhatL;
+  int    Niter;
+  int    iostep;
+  int    maxIter;
+  int    verbose;
+  dfloat tol;
 
-   memory<dfloat> WJ;
-   memory<dfloat> invWJ;
+  dlong Nall;
+  dlong NglobalDofs;
 
-   deviceMemory<dfloat> o_DL;
-   deviceMemory<dfloat> o_PL;
-   deviceMemory<dfloat> o_DrhsL;
-   deviceMemory<dfloat> o_DhatL;
-   deviceMemory<dfloat> o_PhatL;
+  dfloat ellipticTOL;
+  dfloat tau;
 
-   deviceMemory<dfloat> o_DtildeL;
-   deviceMemory<dfloat> o_Dtilde;
+  int    Nstages;
+  int    embedded;
+  dfloat gamma;
+  dfloat invGamma;
+  dfloat invGammaDt;
+  dfloat invDt;
+  int    Nsteps;
+  dfloat dt;
+  dfloat startTime;
+  dfloat finalTime;
 
-   deviceMemory<dfloat> o_Drhs;
-   deviceMemory<dfloat> o_scratch1;
-   deviceMemory<dfloat> o_scratch2;
-   deviceMemory<dfloat> o_scratch1L;
-   deviceMemory<dfloat> o_scratch2L;
+  dfloat lambdaSolve;
+  dfloat omega;
+  dfloat sigma;
 
-   deviceMemory<dfloat> o_FL;
-   deviceMemory<dfloat> o_filtPL;
-   
-   deviceMemory<dfloat> o_invMM;
-   deviceMemory<dfloat> o_MM;
-   deviceMemory<dfloat> o_invWJ;
-   deviceMemory<dfloat> o_WJ;
+  // flux source info
+  dfloat xsource;
+  dfloat ysource;
+  dfloat zsource;
+  dfloat fsource;
 
-   stoppingCriteria_t<dfloat> *stoppingCriteria = NULL;
-   ellipticStoppingCriteria<dfloat> *esc = NULL;
+  // global l2 errors
+  dfloat L2ErrP;
+  dfloat L2ErrD;
 
-   
-   kernel_t waveStageUpdateKernel;
-   kernel_t waveCombineKernel;
-   kernel_t waveErrorEstimateKernel;
-   kernel_t waveStepInitializeKernel;
-   kernel_t waveStepFinalizeKernel;
-   kernel_t waveStageInitializeKernel;
-   kernel_t waveStageFinalizeKernel;
-   kernel_t waveInitialConditionsKernel;
-   kernel_t waveForcingKernel;
+  memory<int>       patchLabels;
+  deviceMemory<int> o_EToPatch;
 
-   kernel_t waveStepInitializeKernelV2;
-   kernel_t waveStageInitializeKernelV2;
-   kernel_t waveStageFinalizeKernelV2;
-   kernel_t waveStageRHSKernelV2;
+  linAlgMatrix_t<dfloat> alpha, beta, betahat, esdirkC, alphatilde, gammatilde;
 
-   kernel_t waveSurfaceSourceKernel;
-   
-   wave_t() = default;
-   wave_t(platform_t &_platform,
-          mesh_t &_mesh,
-          waveSettings_t& _settings) {
-     Setup(_platform, _mesh, _settings);
-   }
-   
-   //setup
-   void Setup(platform_t& _platform, mesh_t& _mesh,
-              waveSettings_t& _settings);
+  deviceMemory<dfloat> o_alphatilde;
+  deviceMemory<dfloat> o_gammatilde;
+  deviceMemory<dfloat> o_betatilde;
+  deviceMemory<dfloat> o_betahattilde;
+  deviceMemory<dfloat> o_alpha;
+  deviceMemory<dfloat> o_beta;
+  deviceMemory<dfloat> o_betaAlpha;
+  deviceMemory<dfloat> o_betahatAlpha;
+  deviceMemory<dfloat> o_betahat;
+  deviceMemory<dfloat> o_gamma;
+  deviceMemory<dfloat> o_esdirkC;
 
-   void Solve(deviceMemory<dfloat> &_o_DL,
-              deviceMemory<dfloat> &_o_PL,
-              deviceMemory<dfloat> &_o_FL);
+  memory<dfloat> DL;
+  memory<dfloat> PL;
+  memory<dfloat> DrhsL;
+  memory<dfloat> DhatL;
+  memory<dfloat> PhatL;
 
-   void SolveV2(deviceMemory<dfloat> &_o_DL,
-                deviceMemory<dfloat> &_o_PL,
-                deviceMemory<dfloat> &_o_FL);
+  memory<dfloat> WJ;
+  memory<dfloat> invWJ;
 
-   
-   void Operator(deviceMemory<dfloat> &inPL,
-                 deviceMemory<dfloat> &outPL);
+  deviceMemory<dfloat> o_DL;
+  deviceMemory<dfloat> o_PL;
+  deviceMemory<dfloat> o_DrhsL;
+  deviceMemory<dfloat> o_DhatL;
+  deviceMemory<dfloat> o_PhatL;
 
-   void waveHoltz(deviceMemory<dfloat> &o_qL);
-   void waveHoltzV2(deviceMemory<dfloat> &o_qL);
-   
-   void Run();
-   
-   void Report(dfloat time, int tstep);
+  deviceMemory<dfloat> o_DtildeL;
+  deviceMemory<dfloat> o_Dtilde;
 
-   void ReportError(dfloat t,
-                    dfloat elapsedTime,
-                    int iterations,
-                    deviceMemory<dfloat>& DL,
-                    deviceMemory<dfloat>& PL);
+  deviceMemory<dfloat> o_Drhs;
+  deviceMemory<dfloat> o_scratch1;
+  deviceMemory<dfloat> o_scratch2;
+  deviceMemory<dfloat> o_scratch1L;
+  deviceMemory<dfloat> o_scratch2L;
 
-   
-   void PlotFields(libp::memory<dfloat>& DL,
-                   libp::memory<dfloat>& PL,
-                   std::string fileName);
+  deviceMemory<dfloat> o_FL;
+  deviceMemory<dfloat> o_filtPL;
 
+  deviceMemory<dfloat> o_invMM;
+  deviceMemory<dfloat> o_MM;
+  deviceMemory<dfloat> o_invWJ;
+  deviceMemory<dfloat> o_WJ;
+
+  stoppingCriteria_t<dfloat>*       stoppingCriteria = NULL;
+  ellipticStoppingCriteria<dfloat>* esc              = NULL;
+
+  kernel_t waveStageUpdateKernel;
+  kernel_t waveCombineKernel;
+  kernel_t waveErrorEstimateKernel;
+  kernel_t waveStepInitializeKernel;
+  kernel_t waveStepFinalizeKernel;
+  kernel_t waveStageInitializeKernel;
+  kernel_t waveStageFinalizeKernel;
+  kernel_t waveInitialConditionsKernel;
+  kernel_t waveForcingKernel;
+
+  kernel_t waveStepInitializeKernelV2;
+  kernel_t waveStageInitializeKernelV2;
+  kernel_t waveStageFinalizeKernelV2;
+  kernel_t waveStageRHSKernelV2;
+
+  kernel_t waveSurfaceSourceKernel;
+
+  wave_t() = default;
+  wave_t(platform_t& _platform, mesh_t& _mesh, waveSettings_t& _settings) {
+    Setup(_platform, _mesh, _settings);
+  }
+
+  // setup
+  void Setup(platform_t& _platform, mesh_t& _mesh, waveSettings_t& _settings);
+
+  void Solve(deviceMemory<dfloat>& _o_DL,
+             deviceMemory<dfloat>& _o_PL,
+             deviceMemory<dfloat>& _o_FL);
+
+  void SolveV2(deviceMemory<dfloat>& _o_DL,
+               deviceMemory<dfloat>& _o_PL,
+               deviceMemory<dfloat>& _o_FL);
+
+  void Operator(deviceMemory<dfloat>& inPL, deviceMemory<dfloat>& outPL);
+
+  void waveHoltz(deviceMemory<dfloat>& o_qL);
+  void waveHoltzV2(deviceMemory<dfloat>& o_qL);
+
+  void Run();
+
+  void Report(dfloat time, int tstep);
+
+  void ReportError(dfloat                t,
+                   dfloat                elapsedTime,
+                   int                   iterations,
+                   deviceMemory<dfloat>& DL,
+                   deviceMemory<dfloat>& PL);
+
+  // report global l2 errors
+  void ReportGlobalError(dfloat                t,
+                         deviceMemory<dfloat>& DL,
+                         deviceMemory<dfloat>& PL);
+
+  void PlotFields(libp::memory<dfloat>& DL,
+                  libp::memory<dfloat>& PL,
+                  std::string           fileName);
 };
 
 #endif

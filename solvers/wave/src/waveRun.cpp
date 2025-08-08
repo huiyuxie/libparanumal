@@ -149,10 +149,16 @@ void wave_t::Run() {
   platform.device.finish();
 
   double elapsedTime = ElapsedTime(starts, ends);
-  std::cout << "elapsedTime = " << std::scientific << elapsedTime << std::endl;
 
-  // output error
-  // ReportError(finalTime, elapsedTime, o_DL, o_PL);
+  std::cout << std::left << std::setw(22) << "Elapsed Time:" << std::right
+            << std::setw(18) << std::scientific << std::setprecision(6)
+            << elapsedTime << std::endl;
+
+  // save global l2 errors to member variables
+  ReportGlobalError(finalTime, o_DL, o_PL);
+
+  std::cout << "\nL2 errors (t=" << finalTime << "): "
+            << "P=" << L2ErrP << ", D=" << L2ErrD << '\n';
 
   if(settings.compareSetting("OUTPUT TO FILE", "TRUE")) {
     // copy data back to host
