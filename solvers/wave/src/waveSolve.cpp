@@ -36,8 +36,9 @@ void diagnostic(dlong                 N,
 
   dfloat normx = platform.linAlg().norm2(N, o_x, mesh.comm);
 
-  std::cout << std::scientific << std::setw(10) << std::endl;
-  std::cout << "norm(" << message << ")=" << normx << std::endl;
+  std::cout << "[Diagnostic] norm(" << message << ") = " << std::scientific
+            << std::setprecision(6) << normx << std::endl;
+  std::cout << std::endl;
 }
 
 void wave_t::Solve(deviceMemory<dfloat>& o_rDL,
@@ -253,7 +254,7 @@ void wave_t::Solve(deviceMemory<dfloat>& o_rDL,
         platform.linAlg().norm2(mesh.Np * mesh.Nelements, o_rDL, mesh.comm);
 
     printf("====> time=%g, dt=%g, step=%d, sum(iterD)=%d, ave(iterD)=%3.2f, "
-           "norm(P,l2) =%3.2e, norm(D,l2) =%3.2e\n",
+           "norm(P,l2)=%3.2e, norm(D,l2)=%3.2e\n",
            t + dt,
            dt,
            tstep,
@@ -305,6 +306,14 @@ void wave_t::Solve(deviceMemory<dfloat>& o_rDL,
     }
   }
 
-  std::cout << "time=" << Nsteps * dt << ", Cumulative iterations: " << cumIter
-            << std::endl;
+  std::cout << "\nShort Summary\n";
+  std::cout << std::string(40, '=') << std::endl;
+
+  std::cout << std::left << std::setw(22) << "Final Time:" << std::right
+            << std::setw(18) << std::fixed << std::setprecision(6)
+            << Nsteps * dt << std::endl;
+
+  std::cout << std::left << std::setw(22)
+            << "Cumulative Iterations:" << std::right << std::setw(18)
+            << cumIter << std::endl;
 }
