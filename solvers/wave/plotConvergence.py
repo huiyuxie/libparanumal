@@ -133,6 +133,7 @@ def main():
             print(f"      L2 errors (t={t_final}): P={L2P:.6e}, D={L2D:.6e}")
             results.append((dt, t_final, L2P, L2D))
 
+    # get convergence rate
     results.sort(key=lambda x: x[0])
     dts = [r[0] for r in results]
     errsP = [r[2] for r in results]
@@ -154,6 +155,8 @@ def main():
     ax.set_xticklabels([f"{dt:g}" for dt in dts])
     ax.tick_params(axis="x", labelrotation=30)
     plt.margins(x=0.05)
+
+    plt.title(rf"{base_rc.name} — $L^2$ error vs $\Delta t$")
 
     plt.tight_layout()
     plt.savefig(args.out_png, dpi=200)
