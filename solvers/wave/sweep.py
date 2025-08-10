@@ -97,11 +97,19 @@ def rewrite_time_step(rc_text: str, dt: float) -> str:
     return _rewrite_scalar_after_header(rc_text, r'^\s*\[\s*TIME\s*STEP\s*\]\s*$', str(dt))
 
 
-def rewrite_box_nx_ny(rc_text: str, nx: int, ny: int) -> str:
+def has_box_nz(rc_text: str) -> bool:
+    return _find_header_index(rc_text.splitlines(), r'^\s*\[\s*BOX\s*NZ\s*\]\s*$') is not None
+
+
+def rewrite_box_n(rc_text: str, n: int) -> str:
     out = _rewrite_scalar_after_header(
-        rc_text, r'^\s*\[\s*BOX\s*NX\s*\]\s*$', str(int(nx)))
+        rc_text, r'^\s*\[\s*BOX\s*NX\s*\]\s*$', str(int(n)))
     out = _rewrite_scalar_after_header(
-        out,     r'^\s*\[\s*BOX\s*NY\s*\]\s*$', str(int(ny)))
+        out,     r'^\s*\[\s*BOX\s*NY\s*\]\s*$', str(int(n)))
+    # nz is optional: only rewrite if the header exists; ignore if missing
+    if has_box_nz(out):
+        out = _rewrite_scalar_after_header(
+            out, r'^\s*\[\s*BOX\s*NZ\s*\]\s*$', str(int(n)))
     return out
 
 
@@ -138,7 +146,7 @@ def run_case(binary: Path, rc_path: Path, mpiexec: str):
 
 def main():
     ap = argparse.ArgumentParser(
-        description="sweep time step (dt) and/or grid resolution n (nx=ny=h) and plot l2 errors."
+        description="sweep time step (dt) and/or mesh resolution h (nx=ny[=nz]=h) and plot l2 errors."
     )
     ap.add_argument("--binary", default="./waveMain", help="path to waveMain")
     ap.add_argument("--rc", required=True,
@@ -146,26 +154,28 @@ def main():
     # dt-sweep: list of dt values; if omitted, dt-sweep is skipped
     ap.add_argument("--dt", nargs="+", type=float, default=None,
                     help="time step values to test (dt-sweep), e.g., 0.4 0.2 0.1 0.05.")
-    # n-sweep: absolute target grid sizes; each value sets nx=ny=n
+    # h-sweep: absolute target mesh sizes; each value sets nx=ny[=nz]=h
     ap.add_argument("--h", nargs="+", type=int, default=None,
-                    help="absolute grid sizes n (sets [BOX NX]=[BOX NY]=h), e.g., 2 4 8 16.")
-    # fixed dt to use during n-sweep
+                    help="absolute mesh sizes h (sets [BOX NX]=[BOX NY](=[BOX NZ])=h), e.g., 8 16 32 64.")
+    # fixed dt to use during h-sweep
     ap.add_argument("--dt-fixed", type=float, default=None,
-                    help="fixed time step to use for n-sweep (defaults to first --dt value, else value in .rc).")
-    # fixed n to use during dt-sweep (sets nx=ny=n for every dt)
+                    help="fixed time step to use for h-sweep (defaults to first --dt value, else value in .rc).")
+    # fixed h to use during dt-sweep (sets nx=ny[=nz]=h for every dt)
     ap.add_argument("--h-fixed", type=int, default=None,
-                    help="absolute grid size h to use during dt-sweep (sets nx=ny=h).")
+                    help="absolute mesh size h to use during dt-sweep (sets nx=ny[=nz]=h).")
     ap.add_argument("--mpiexec", default="",
                     help='mpi launcher, e.g. "mpirun -n 4"')
     ap.add_argument("--out-png-dt", default="l2error_dt.png",
                     help="output png for dt-sweep")
     ap.add_argument("--out-png-h",  default="l2error_h.png",
-                    help="output png for n-sweep (nx=ny=h)")
+                    help="output png for h-sweep (nx=ny[=nz]=h)")
     args = ap.parse_args()
 
     binary = Path(args.binary).resolve()
     base_rc = Path(args.rc).resolve()
     rc_text = base_rc.read_text(encoding="utf-8")
+
+    three_d = has_box_nz(rc_text)
 
     did_anything = False
 
@@ -173,13 +183,17 @@ def main():
     if args.dt:
         did_anything = True
 
-        # optionally set absolute nx=ny for all dt runs if --h-fixed is given
+        # optionally set absolute mesh size for all dt runs if --h-fixed is given
         rc_base_for_dt = rc_text
         if args.h_fixed is not None:
             h = max(1, int(args.h_fixed))
-            rc_base_for_dt = rewrite_box_nx_ny(rc_base_for_dt, h, h)
-            print(
-                f"[info:dt] using fixed grid NX=NY={h} (denoted h) for all dt values")
+            rc_base_for_dt = rewrite_box_n(rc_base_for_dt, h)
+            if three_d:
+                print(
+                    f"[info:dt] using fixed mesh NX=NY=NZ={h} for all dt values")
+            else:
+                print(
+                    f"[info:dt] using fixed mesh NX=NY={h} for all dt values")
 
         results = []  # (dt, t_final, L2P, L2D)
         with tempfile.TemporaryDirectory() as td:
@@ -233,23 +247,24 @@ def main():
 
         print(f"[info:h] using fixed dt = {dt_fixed:g} for all h values")
 
-        results_h = []  # (h, nx, ny, t_final, L2P, L2D)
+        results_h = []  # (h, nx, ny, [nz], t_final, L2P, L2D)
 
         with tempfile.TemporaryDirectory() as td:
             tmpdir = Path(td)
             for h in args.h:
                 h = max(1, int(h))
-                nx = ny = h
-                # start from base text each time
                 rc_mod = rewrite_time_step(rc_text, dt_fixed)
-                rc_mod = rewrite_box_nx_ny(rc_mod, nx, ny)
+                rc_mod = rewrite_box_n(rc_mod, h)
                 rc_tmp = tmpdir / f"{base_rc.stem}_h_{h}.rc"
                 rc_tmp.write_text(rc_mod, encoding="utf-8")
-                print(f"[run:h] h={h} -> NX=NY={nx} ({rc_tmp.name})")
+                if three_d:
+                    print(f"[run:h] h={h} -> NX=NY=NZ={h} ({rc_tmp.name})")
+                else:
+                    print(f"[run:h] h={h} -> NX=NY={h} ({rc_tmp.name})")
                 t_final, L2P, L2D = run_case(binary, rc_tmp, args.mpiexec)
                 print(
                     f"       l2 errors (t={t_final}): P={L2P:.6e}, D={L2D:.6e}")
-                results_h.append((float(h), nx, ny, t_final, L2P, L2D))
+                results_h.append((float(h), h, h, t_final, L2P, L2D))
 
         # sort by h
         results_h.sort(key=lambda r: r[0])
@@ -279,7 +294,7 @@ def main():
         print(f"[write] {args.out_png_h}")
 
     if not did_anything:
-        print("nothing to do: provide --dt (for dt-sweep) and/or --h (for n-sweep).", file=sys.stderr)
+        print("nothing to do: provide --dt (for dt-sweep) and/or --h (for h-sweep).", file=sys.stderr)
         sys.exit(2)
 
 
