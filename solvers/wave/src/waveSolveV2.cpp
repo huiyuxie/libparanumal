@@ -219,7 +219,7 @@ void wave_t::SolveV2(deviceMemory<dfloat>& o_rDL,
              ", %g, %d, %g, %g; global: N, dofs, elapsed, iterations, time per "
              "node, nodes*iterations/time %s\n",
              mesh.N,
-             NglobalDofs,
+             (long long)NglobalDofs,
              elapsedTime,
              iter,
              elapsedTime / (NglobalDofs),
