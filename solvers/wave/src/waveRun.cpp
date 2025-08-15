@@ -182,7 +182,7 @@ void wave_t::Run() {
         "# libParanumal binary format: blocks of Np*Nel doubles for "
         "(x,y,DL,PL,..). First line is: dim,Np,Nel,Nfields,sizeof(dfloat)\n");
     fprintf(fp,
-            "%d %d %d %d %d (x,y,PL,DL)\n",
+            "%d %d %d %d %zu (x,y,PL,DL)\n",
             mesh.dim,
             mesh.Np,
             mesh.Nelements,
