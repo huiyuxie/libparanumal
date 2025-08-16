@@ -25,43 +25,55 @@ SOFTWARE.
 
 */
 
-#define ellipticForcing3D(x, y, z, lambda, f)    \
-  { \
-  f = 0.;                                     \
-  }
-
+#define ellipticForcing3D(x, y, z, lambda, f) \
+  { f = 0.; }
 
 /* Homogeneous Dirichlet boundary condition   */
-#define ellipticDirichletCondition3D(x,y,z,nx,ny,nz,uM,uxM,uyM,uzM,uB,uxB,uyB,uzB) \
-  {              \
-    uB  = 0.f;   \
-    uxB = uxM;   \
-    uyB = uyM;   \
-    uzB = uzM;   \
+#define ellipticDirichletCondition3D(                          \
+    x, y, z, nx, ny, nz, uM, uxM, uyM, uzM, uB, uxB, uyB, uzB) \
+  {                                                            \
+    uB  = 0.f;                                                 \
+    uxB = uxM;                                                 \
+    uyB = uyM;                                                 \
+    uzB = uzM;                                                 \
   }
 
 /* Homogeneous Neumann boundary condition   */
-#define ellipticNeumannCondition3D(x,y,z,nx,ny,nz,uM,uxM,uyM,uzM,uB,uxB,uyB,uzB) \
-  {              \
-    uB  = uM;    \
-    uxB = 0.f;   \
-    uyB = 0.f;   \
-    uzB = 0.f;   \
+#define ellipticNeumannCondition3D(                            \
+    x, y, z, nx, ny, nz, uM, uxM, uyM, uzM, uB, uxB, uyB, uzB) \
+  {                                                            \
+    uB  = uM;                                                  \
+    uxB = 0.f;                                                 \
+    uyB = 0.f;                                                 \
+    uzB = 0.f;                                                 \
   }
 
 #define waveForcingFunction3D(t, x, y, z, sigma, omega, f) \
-  {                                                      \
-    f = 0;                                               \
+  { f = 0; }
+
+#define waveInitialConditionsFunction3D(t, x, y, z, d, p)                 \
+  {                                                                       \
+    d = M_PI * sqrt(3.) * sin(M_PI * x) * sin(M_PI * y) * sin(M_PI * z) * \
+        cos(M_PI * sqrt(3.) * t);                                         \
+    p = sin(M_PI * x) * sin(M_PI * y) * sin(M_PI * z) *                   \
+        sin(M_PI * sqrt(3.) * t);                                         \
   }
 
-
-#define waveInitialConditionsFunction3D(t, x, y, z, d, p)  \
-  {                                                     \
-    d = M_PI*sqrt(3.)*sin(M_PI*x)*sin(M_PI*y)*sin(M_PI*z)*cos(M_PI*sqrt(3.)*t); \
-    p = sin(M_PI*x)*sin(M_PI*y)*sin(M_PI*z)*sin(M_PI*sqrt(3.)*t);        \
-  }
-
-#define waveSurfaceSource3D(patch, tin, xsource, ysource, zsource, fsource, xn, yn, zn, p, dpdx, dpdy, dpdz, d, dddx, dddy, dddz) \
-  {                                                                     \
-  }
-    
+#define waveSurfaceSource3D(patch,   \
+                            tin,     \
+                            xsource, \
+                            ysource, \
+                            zsource, \
+                            fsource, \
+                            xn,      \
+                            yn,      \
+                            zn,      \
+                            p,       \
+                            dpdx,    \
+                            dpdy,    \
+                            dpdz,    \
+                            d,       \
+                            dddx,    \
+                            dddy,    \
+                            dddz)    \
+  {}

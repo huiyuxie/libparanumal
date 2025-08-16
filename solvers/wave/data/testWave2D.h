@@ -25,37 +25,31 @@ SOFTWARE.
 */
 
 #define ellipticForcing2D(x, y, lambda, f) \
-  { \
-    f = 0.;                                     \
-  }
-
+  { f = 0.; }
 
 /* Homogeneous Dirichlet boundary condition   */
-#define ellipticDirichletCondition2D(x, y, nx, ny, uM, uxM, uyM, uB, uxB, uyB)  \
-  {              \
-    uB  = 0.f;   \
-    uxB = uxM;   \
-    uyB = uyM;   \
+#define ellipticDirichletCondition2D(x, y, nx, ny, uM, uxM, uyM, uB, uxB, uyB) \
+  {                                                                            \
+    uB  = 0.f;                                                                 \
+    uxB = uxM;                                                                 \
+    uyB = uyM;                                                                 \
   }
 
 /* Homogeneous Neumann boundary condition   */
-#define ellipticNeumannCondition2D(x, y, nx, ny, uM, uxM, uyM, uB, uxB, uyB)  \
-  {              \
-    uB  = uM;    \
-    uxB = 0.f;   \
-    uyB = 0.f;   \
+#define ellipticNeumannCondition2D(x, y, nx, ny, uM, uxM, uyM, uB, uxB, uyB) \
+  {                                                                          \
+    uB  = uM;                                                                \
+    uxB = 0.f;                                                               \
+    uyB = 0.f;                                                               \
   }
 
-#define waveForcingFunction2D(t, x, y, sigma, omega, f)	\
-  {                                            \
-    f = 0.;                                    \
-  }
+#define waveForcingFunction2D(t, x, y, sigma, omega, f) \
+  { f = 0.; }
 
 /* set m=1 and n=1 so o=sqrt(n*n+m*m)=sqrt(2.) */
-#define waveInitialConditionsFunction2D(t, x, y, d, p)   \
-  {                                                      \
-    dfloat o = sqrt(2.);                                 \
-    d = -o * M_PI * sin(M_PI * x) * sin(M_PI * y) * sin(o * M_PI * t); \
-    p = sin(M_PI * x) * sin(M_PI * y) * cos(o * M_PI * t); \
+#define waveInitialConditionsFunction2D(t, x, y, d, p)                        \
+  {                                                                           \
+    dfloat o = sqrt(2.);                                                      \
+    d        = -o * M_PI * sin(M_PI * x) * sin(M_PI * y) * sin(o * M_PI * t); \
+    p        = sin(M_PI * x) * sin(M_PI * y) * cos(o * M_PI * t);             \
   }
-
