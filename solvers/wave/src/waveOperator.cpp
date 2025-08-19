@@ -48,9 +48,9 @@ void wave_t::Operator(deviceMemory<dfloat>& o_QL, deviceMemory<dfloat>& o_AQL) {
   for(int tstep = 0; tstep < Nsteps; ++tstep) { // do adaptive later
     int iter = 0;
 
-    dfloat t = tstep * dt;
+    /* dfloat t = tstep * dt; */ // not used
 
-    timePoint_t starts = GlobalPlatformTime(platform);
+    /* timePoint_t starts = GlobalPlatformTime(platform); */ // not used
 
     // PhatL = PL, DhatL = DL, DrhsL = lambda*WJ*(scD*DL + scP*PL)
     dfloat scD = 1. + invGamma * alpha(2, 1);
