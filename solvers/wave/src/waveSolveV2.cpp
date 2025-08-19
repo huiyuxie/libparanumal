@@ -74,15 +74,6 @@ void wave_t::SolveV2(deviceMemory<dfloat>& o_rDL,
 
       dfloat scF = 0;
 
-      if(settings.compareSetting("SOLVER MODE", "WAVEHOLTZ")) {
-        for(int j = 1; j <= stage; ++j) {
-          dfloat tj = t + dt * esdirkC(1, j);
-          scF += alpha(stage, j) * cos(omega * tj);
-        }
-      } else {
-        scF = 0; // no forcing if TIMEDOMAIN
-      }
-
       waveStageRHSKernelV2(mesh.Nelements,
                            Nstages,
                            stage,
@@ -166,23 +157,6 @@ void wave_t::SolveV2(deviceMemory<dfloat>& o_rDL,
     dfloat scF   = 0;
     dfloat filtP = 0;
     filtD        = (dfloat)0.;
-
-    if(settings.compareSetting("SOLVER MODE", "WAVEHOLTZ")) {
-      for(int i = 1; i <= Nstages; ++i) {
-        dfloat ti = t + dt * esdirkC(1, i);
-        scF += beta(1, i) * cos(omega * ti);
-      }
-      for(int i = 1; i <= Nstages; ++i) {
-        dfloat filti =
-            2. * (cos(omega * (t + dt * esdirkC(1, i))) - 0.25) / finalTime;
-        filtP += beta(1, i) * filti;
-        for(int j = 1; j <= i; ++j) {
-          filtD(1, j) += beta(1, i) * filti * alpha(i, j);
-        }
-      }
-    } else {
-      scF = 0; // no forcing if TIMEDOMAIN
-    }
 
     o_filtD.copyFrom(filtD.data);
 
