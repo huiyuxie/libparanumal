@@ -125,7 +125,7 @@ public:
 
   void Run();
 
-   void WaveSolver();
+  /* void WaveSolver();  */ // not used
 
    
   int Solve(linearSolver_t<dfloat>& linearSolver, deviceMemory<dfloat> &o_x, deviceMemory<dfloat> &o_r,
