@@ -67,6 +67,26 @@ void ellipticAddSettings(settings_t& settings,
                       "Iterative Linear Solver to use for solve",
                       {"PCG", "FPCG", "NBPCG", "NBFPCG", "PGMRES", "PMINRES"});
 
+  settings.newSetting(prefix+"LINEAR SOLVER OPTIMIZATION",
+                      "NONE",
+                      "Optimization type for linear solver",
+                      {"NONE", "FUSE", "AXTRILINEAR", "AXINTERP", "ALT"});
+
+  std::vector<std::string> allowedValues;
+  allowedValues.push_back("-1");
+  for (int i = 0; i <= 300; i++) {
+    std::ostringstream oss;
+    oss << i;
+    allowedValues.push_back(oss.str());
+  }
+
+  
+  settings.newSetting(prefix+"LINEAR SOLVER PRECISION SWITCH",
+                      "-1",
+                      "when iteration solver switches precisions",
+		      //    {"-1", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"});
+		      allowedValues);
+  
   settings.newSetting(prefix+"LINEAR SOLVER STOPPING CRITERION",
                       "ABS/REL-INITRESID",
                       "Stopping criterion for the linear solver",
@@ -78,6 +98,11 @@ void ellipticAddSettings(settings_t& settings,
                       {"NONE", "JACOBI", "MASSMATRIX", "PARALMOND", "MULTIGRID", "SEMFEM", "OAS"});
 
   /* MULTIGRID options */
+  settings.newSetting(prefix+"MULTIGRID PRECISION",
+                      "HALF",
+                      "PRECISION FOR MULTIGRID",
+                      {"DOUBLE", "FLOAT", "HALF"});
+
   settings.newSetting(prefix+"MULTIGRID COARSENING",
                       "HALFDOFS",
                       "p-Multigrid coarsening strategy",
@@ -124,8 +149,11 @@ void ellipticSettings_t::report() {
     reportSetting("DISCRETIZATION");
     reportSetting("LINEAR SOLVER");
     reportSetting("PRECONDITIONER");
-
+    reportSetting("LINEAR SOLVER OPTIMIZATION");
+    reportSetting("LINEAR SOLVER PRECISION SWITCH");
+    
     if (compareSetting("PRECONDITIONER","MULTIGRID")) {
+      reportSetting("MULTIGRID PRECISION");
       reportSetting("MULTIGRID COARSENING");
       reportSetting("MULTIGRID SMOOTHER");
       if (compareSetting("MULTIGRID SMOOTHER","CHEBYSHEV"))
