@@ -130,6 +130,29 @@ void mesh_t::SetupBoxQuad2D(){
   }
 
 
+  int kershawMapType = -1;
+  settings.getSetting("BOX KERSHAW MAP", kershawMapType);
+  if(kershawMapType!=-1){
+    dfloat kershawParam = 1;
+    settings.getSetting("BOX KERSHAW PARAMETER", kershawParam);
+    for(int n=0;n<Nelements*Nverts;++n){
+#if 1
+      dfloat xn = EX[n], yn = EY[n];
+      // scale into biunit box
+      xn = xn/DIMX;
+      yn = yn/DIMY;
+      kershawMap2D(kershawMapType, kershawParam, xn, yn);
+
+      // scale back
+      EX[n] = xn*DIMX;
+      EY[n] = yn*DIMY;
+#else
+      kershawMap2D(kershawMapType, kershawParam, EX[n], EY[n]);
+#endif
+    }
+  }
+
+  
   if (boundaryFlag != -1) { //-1 reserved for periodic case
     NboundaryFaces = 2*NX + 2*NY;
     boundaryInfo.malloc(NboundaryFaces*(NfaceVertices+1));
