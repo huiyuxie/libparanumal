@@ -212,6 +212,11 @@ public:
 
   dlong getNumCols(int k);
   dlong getNumRows(int k);
+
+  std::shared_ptr<multigrid_t> GetMultigrid() const {
+    return multigrid;
+  }
+
 private:
   platform_t platform;
   settings_t settings;

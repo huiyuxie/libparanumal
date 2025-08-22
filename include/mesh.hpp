@@ -103,6 +103,8 @@ class mesh_t {
   memory<dfloat> EX; // coordinates of vertices for each element
   memory<dfloat> EY;
   memory<dfloat> EZ;
+  deviceMemory<dfloat> o_EXYZ;
+  deviceMemory<pfloat> o_pfloat_EXYZ;
 
   dlong Nelements=0;       //local element count
   hlong NelementsGlobal=0; //global element count
@@ -151,6 +153,8 @@ class mesh_t {
   int Nq=0;                 // N = Polynomial order, Nq=N+1
   memory<dfloat> gllz;      // 1D GLL quadrature nodes
   memory<dfloat> gllw;      // 1D GLL quadrature weights
+  deviceMemory<dfloat> o_gllzw;
+  deviceMemory<pfloat> o_pfloat_gllzw;
 
   // face node info
   int Nfp=0;                // number of nodes per face
@@ -260,6 +264,10 @@ class mesh_t {
   deviceMemory<dfloat> o_vgeo;
   deviceMemory<pfloat> o_pfloat_vgeo;
 
+  memory<dfloat> vgeoV;
+  deviceMemory<dfloat> o_vgeoV;
+  deviceMemory<pfloat> o_pfloat_vgeoV;
+
   // surfaceGeometricFactors;
   dlong   Nsgeo;
   memory<dfloat> sgeo;
@@ -270,7 +278,10 @@ class mesh_t {
   dlong Nggeo;
   memory<dfloat> ggeo;
   deviceMemory<dfloat> o_ggeo;
+  deviceMemory<dfloat> o_ggeoV;
   deviceMemory<pfloat> o_pfloat_ggeo;
+  deviceMemory<pfloat> o_pfloat_ggeoV;
+  memory<dfloat> ggeoNoW;
 
   memory<dfloat> cubx, cuby, cubz; // coordinates of physical nodes
   deviceMemory<dfloat> o_cubx, o_cuby, o_cubz;

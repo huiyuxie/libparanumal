@@ -53,6 +53,14 @@ class linAlg_t {
   template<typename T>
   void set(const dlong N, const T alpha, deviceMemory<T> o_a);
 
+  // o_a[n] = alpha
+  template<typename T>
+  void set(const dlong N, const T alpha, deviceMemory<T> o_a, const int dir);
+
+  // o_a[n] = alpha
+  template<typename T>
+  void setnc(const dlong N, const T alpha, deviceMemory<T> o_a, const int dir);
+
   // o_a[n] *= alpha
   template<typename T>
   void scale(const dlong N, const T alpha, deviceMemory<T> o_a);
@@ -60,6 +68,16 @@ class linAlg_t {
   // o_a[n] += alpha
   template<typename T>
   void add(const dlong N, const T alpha, deviceMemory<T> o_a);
+
+  // o_y[n] = beta*o_y[n] + alpha*o_x[n], can reverse direction
+  template<typename T>
+  void axpy(const dlong N, const T alpha, deviceMemory<T> o_x,
+                           const T beta,  deviceMemory<T> o_y, int reverse);
+  
+  // o_y[n] = beta*o_y[n] + alpha*o_x[n], can reverse direction + non-cache load/store
+  template<typename T>
+  void axpync(const dlong N, const T alpha, deviceMemory<T> o_x,
+                           const T beta,  deviceMemory<T> o_y, int reverse);
 
   // o_y[n] = beta*o_y[n] + alpha*o_x[n]
   template<typename T>
@@ -72,16 +90,82 @@ class linAlg_t {
                             const T beta,  deviceMemory<T> o_y,
                             deviceMemory<T> o_z);
 
+  // updateCheby1: o_x[n] = alpha*o_S[n]*o_r[n], though this is the same as amx
+  template<typename T>
+  void updateCheby1(const dlong N, const T alpha, const T beta, deviceMemory<T> o_x,
+		    deviceMemory<T> o_S, deviceMemory<T> o_y, int reverse);
+  template<typename T>
+  void updateCheby1nc(const dlong N, const T alpha, const T beta, deviceMemory<T> o_x,
+		      deviceMemory<T> o_S, deviceMemory<T> o_y, int reverse);
+
+  // updateCheby2: o_x[n] = o_x0[n] + alpha* o_S[n]* (o_r[n] - o_Ax[n])
+  template<typename T>
+  void updateCheby2(const dlong N, const T alpha, deviceMemory<T> o_r,
+		    deviceMemory<T> o_S, deviceMemory<T> o_Ax, deviceMemory<T> o_x0, deviceMemory<T> o_x, int reverse);
+  template<typename T>
+  void updateCheby2nc(const dlong N, const T alpha, deviceMemory<T> o_r,
+		    deviceMemory<T> o_S, deviceMemory<T> o_Ax, deviceMemory<T> o_x0,deviceMemory<T> o_x, int reverse);
+
+  // updateCheby3: o_x2[n] = o_x1[n] + a1* [ a0 * (o_x1[n] - o_x0[n]) + d0 *o_S[n]* (o_r[n] - o_Ax[n]) ]
+  template<typename T>
+  void updateCheby3(const dlong N, const T a1,  const T a0,  const T d0, deviceMemory<T> o_Ax,
+		    deviceMemory<T> o_S, deviceMemory<T> o_r, deviceMemory<T> o_x0,
+		    deviceMemory<T> o_x1,  deviceMemory<T> o_x2, int reverse);
+  template<typename T>
+  void updateCheby3nc(const dlong N, const T a1,  const T a0,  const T d0, deviceMemory<T> o_Ax,
+		    deviceMemory<T> o_S, deviceMemory<T> o_r, deviceMemory<T> o_x0,
+		    deviceMemory<T> o_x1,  deviceMemory<T> o_x2, int reverse);
+
+  // y = (!xIsZero)*y + c1*x1 + c2*x2 + c3*S*x3
+  template<typename T>
+  void updateCheby4(const dlong N,  const T c1,  const T c2, const T c3, deviceMemory<T> o_x1,
+		   deviceMemory<T> o_x2, deviceMemory<T> o_x3, 
+		   deviceMemory<T> o_y, int reverse);
+  template<typename T>
+  void updateCheby4nc(const dlong N, const T c1,  const T c2, const T c3,
+		     deviceMemory<T> o_x1, deviceMemory<T> o_x2, deviceMemory<T> o_x3, 
+		     deviceMemory<T> o_y, int reverse);
+  template<typename T>
+  void updateCheby5(const dlong N,  const T c1,  const T c2, const T c3,
+		    deviceMemory<T> o_x0, deviceMemory<T> o_x1,
+		    deviceMemory<T> o_x2, deviceMemory<T> o_x3, 
+		    deviceMemory<T> o_y, int reverse);
+  template<typename T>
+  void updateCheby5nc(const dlong N, const T c1,  const T c2, const T c3,
+		      deviceMemory<T> o_x0, deviceMemory<T> o_x1,
+		      deviceMemory<T> o_x2, deviceMemory<T> o_x3, 
+		      deviceMemory<T> o_y, int reverse);
+
   // o_x[n] = alpha*o_a[n]*o_x[n]
   template<typename T>
   void amx(const dlong N, const T alpha,
            deviceMemory<T> o_a, deviceMemory<T> o_x);
+  // o_x[n] = alpha*o_a[n]*o_x[n]
+  template<typename T>
+  void amx(const dlong N, const T alpha,
+           deviceMemory<T> o_a, deviceMemory<T> o_x, int dir);
+  // o_x[n] = alpha*o_a[n]*o_x[n]
+  template<typename T>
+  void amxnc(const dlong N, const T alpha,
+           deviceMemory<T> o_a, deviceMemory<T> o_x, int dir);
 
   // o_y[n] = alpha*o_a[n]*o_x[n] + beta*o_y[n]
   template<typename T>
   void amxpy(const dlong N, const T alpha,
              deviceMemory<T> o_a, deviceMemory<T> o_x,
              const T beta, deviceMemory<T> o_y);
+
+  // o_y[n] = alpha*o_a[n]*o_x[n] + beta*o_y[n], can reverse directions
+  template<typename T>
+  void amxpy(const dlong N, const T alpha,
+             deviceMemory<T> o_a, deviceMemory<T> o_x,
+             const T beta, deviceMemory<T> o_y, int reverse);
+
+  // o_y[n] = alpha*o_a[n]*o_x[n] + beta*o_y[n], can reverse directions + non-cache load/store
+  template<typename T>
+  void amxpync(const dlong N, const T alpha,
+             deviceMemory<T> o_a, deviceMemory<T> o_x,
+             const T beta, deviceMemory<T> o_y, int reverse);
 
   // o_z[n] = alpha*o_a[n]*o_x[n] + beta*o_y[n]
   template<typename T>
@@ -120,7 +204,21 @@ class linAlg_t {
 
   // ||o_a||_2
   template<typename T>
-  T norm2(const dlong N, deviceMemory<T> o_a, comm_t comm);
+  T norm2(const dlong N, deviceMemory<T>& o_a, int reverse, comm_t comm);
+
+  // ||o_a||_2
+  template<typename T>
+  T norm2(const dlong N, deviceMemory<T>& o_a, comm_t comm);
+
+  // o_x.o_y, can reverse direction
+  template<typename T>
+  T innerProd(const dlong N, deviceMemory<T> o_x, deviceMemory<T> o_y, int reverse,
+                    comm_t comm);
+
+  // o_x.o_y, can reverse direction + non-cache load/store
+  template<typename T>
+  T innerProdnc(const dlong N, deviceMemory<T> o_x, deviceMemory<T> o_y, int reverse,
+                    comm_t comm);
 
   // o_x.o_y
   template<typename T>
@@ -138,6 +236,8 @@ class linAlg_t {
                             deviceMemory<T> o_y, comm_t comm);
 
   // p=d
+  void p2d(const dlong N, deviceMemory<pfloat> o_p, deviceMemory<dfloat> o_d, int reverse);
+  void d2p(const dlong N, deviceMemory<dfloat> o_d, deviceMemory<pfloat> o_p, int reverse);
   void p2d(const dlong N, deviceMemory<pfloat> o_p, deviceMemory<dfloat> o_d);
   void d2p(const dlong N, deviceMemory<dfloat> o_d, deviceMemory<pfloat> o_p);
 
@@ -194,15 +294,6 @@ class linAlg_t {
                               const memory<long long int>  A, const int LDA,
                               memory<long long int> AT, const int LDAT);
 
-  static void matrixMultiply(const int NrowsA, const int NcolsA, memory<double> A,
-                             const int NrowsB, const int NcolsB, memory<double> B,
-                             memory<double> C);
-  static void matrixMultiply(const int NrowsA, const int NcolsA, memory<float> A,
-                             const int NrowsB, const int NcolsB, memory<float> B,
-                             memory<float> C);
-   
-   
-   
  private:
   platform_t *platform;
   properties_t kernelInfoFloat;
@@ -211,13 +302,27 @@ class linAlg_t {
   static constexpr int blocksize = 256;
 
   kernel_t setKernelFloat;
+  kernel_t setncKernelFloat;
   kernel_t addKernelFloat;
   kernel_t scaleKernelFloat;
   kernel_t axpyKernelFloat;
+  kernel_t axpyncKernelFloat;
   kernel_t zaxpyKernelFloat;
   kernel_t amxKernelFloat;
+  kernel_t amxncKernelFloat;
   kernel_t amxpyKernelFloat;
+  kernel_t amxpyncKernelFloat;
   kernel_t zamxpyKernelFloat;
+  kernel_t updateCheby1KernelFloat;
+  kernel_t updateCheby1ncKernelFloat;
+  kernel_t updateCheby2KernelFloat;
+  kernel_t updateCheby2ncKernelFloat;
+  kernel_t updateCheby3KernelFloat;
+  kernel_t updateCheby3ncKernelFloat;
+  kernel_t updateCheby4KernelFloat;
+  kernel_t updateCheby4ncKernelFloat;
+  kernel_t updateCheby5KernelFloat;
+  kernel_t updateCheby5ncKernelFloat;
   kernel_t adxKernelFloat;
   kernel_t adxpyKernelFloat;
   kernel_t zadxpyKernelFloat;
@@ -227,25 +332,41 @@ class linAlg_t {
   kernel_t norm2KernelFloat;
   kernel_t weightedNorm2KernelFloat;
   kernel_t innerProdKernelFloat;
+  kernel_t innerProdncKernelFloat;
   kernel_t weightedInnerProdKernelFloat;
 
   kernel_t setKernelDouble;
+  kernel_t setncKernelDouble;
   kernel_t addKernelDouble;
   kernel_t scaleKernelDouble;
   kernel_t axpyKernelDouble;
+  kernel_t axpyncKernelDouble;
   kernel_t zaxpyKernelDouble;
   kernel_t amxKernelDouble;
+  kernel_t amxncKernelDouble;
   kernel_t amxpyKernelDouble;
+  kernel_t amxpyncKernelDouble;
   kernel_t zamxpyKernelDouble;
   kernel_t adxKernelDouble;
   kernel_t adxpyKernelDouble;
   kernel_t zadxpyKernelDouble;
+  kernel_t updateCheby1KernelDouble;
+  kernel_t updateCheby1ncKernelDouble;
+  kernel_t updateCheby2KernelDouble;
+  kernel_t updateCheby2ncKernelDouble;
+  kernel_t updateCheby3KernelDouble;
+  kernel_t updateCheby3ncKernelDouble;
+  kernel_t updateCheby4KernelDouble;
+  kernel_t updateCheby4ncKernelDouble;
+  kernel_t updateCheby5KernelDouble;
+  kernel_t updateCheby5ncKernelDouble;
   kernel_t minKernelDouble;
   kernel_t maxKernelDouble;
   kernel_t sumKernelDouble;
   kernel_t norm2KernelDouble;
   kernel_t weightedNorm2KernelDouble;
   kernel_t innerProdKernelDouble;
+  kernel_t innerProdncKernelDouble;
   kernel_t weightedInnerProdKernelDouble;
 
   kernel_t p2dKernel;
