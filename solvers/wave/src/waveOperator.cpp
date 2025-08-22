@@ -72,7 +72,7 @@ void wave_t::Operator(deviceMemory<dfloat>& o_QL, deviceMemory<dfloat>& o_AQL) {
       elliptic.lambda = lambdaSolve;
 
       // record local RHS
-      if(esc) esc->setLocalRHS(o_DrhsL);
+      /* if(esc) esc->setLocalRHS(o_DrhsL); */
 
       // gather rhs to globalDofs if c0
       if(disc_c0) {
@@ -85,13 +85,8 @@ void wave_t::Operator(deviceMemory<dfloat>& o_QL, deviceMemory<dfloat>& o_AQL) {
       }
 
       int modMaxIter = maxIter; // -4;
-      int iterD      = elliptic.Solve(linearSolver,
-                                 o_Dtilde,
-                                 o_Drhs,
-                                 tol,
-                                 modMaxIter,
-                                 verbose,
-                                 stoppingCriteria);
+      int iterD      = elliptic.Solve(
+          linearSolver, o_Dtilde, o_Drhs, tol, modMaxIter, verbose);
 
       // add the boundary data to the masked nodes
       if(disc_c0) {
@@ -265,13 +260,8 @@ void wave_t::Operator(deviceMemory<dfloat>& o_QL, deviceMemory<dfloat>& o_AQL) {
         o_DrhsL.copyTo(o_Drhs);
       }
 
-      int iterD = elliptic.Solve(linearSolver,
-                                 o_Dtilde,
-                                 o_Drhs,
-                                 tol,
-                                 maxIter,
-                                 verbose,
-                                 stoppingCriteria);
+      int iterD =
+          elliptic.Solve(linearSolver, o_Dtilde, o_Drhs, tol, maxIter, verbose);
 
       if(disc_c0) { // scatter x to LocalDofs if c0
         elliptic.ogsMasked.Scatter(o_DtildeL, o_Dtilde, 1, ogs::NoTrans);

@@ -131,13 +131,12 @@ void wave_t::Run() {
   waveForcingKernel(Nall, t, sigma, omega, mesh.o_x, mesh.o_y, mesh.o_z, o_FL); // will use cos(omega*t)*FL
 #endif
 
-  if(elliptic.settings.compareSetting("STOPPING CRITERIA", "ERRORESTIMATE")) {
-    esc = new ellipticStoppingCriteria<dfloat>(&elliptic, NULL);
-    esc->reset();
+  /* if(elliptic.settings.compareSetting("STOPPING CRITERIA", "ERRORESTIMATE"))
+  { esc = new ellipticStoppingCriteria<dfloat>(&elliptic, NULL); esc->reset();
     stoppingCriteria = esc;
   } else {
     stoppingCriteria = new stoppingCriteria_t<dfloat>();
-  }
+  } */
 
   // choose which model to run (fix to time domain now)
   timePoint_t starts = GlobalPlatformTime(platform);

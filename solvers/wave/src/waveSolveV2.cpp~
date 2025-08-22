@@ -100,13 +100,8 @@ void wave_t::SolveV2(deviceMemory<dfloat>& o_rDL,
         o_DrhsL.copyTo(o_Drhs);
       }
 
-      int iterD = elliptic.Solve(linearSolver,
-                                 o_Dtilde,
-                                 o_Drhs,
-                                 tol,
-                                 maxIter,
-                                 verbose,
-                                 stoppingCriteria);
+      int iterD =
+          elliptic.Solve(linearSolver, o_Dtilde, o_Drhs, tol, maxIter, verbose);
 
       if(disc_c0) { // scatter x to LocalDofs if c0
         elliptic.ogsMasked.Scatter(o_DtildeL, o_Dtilde, 1, ogs::NoTrans);
