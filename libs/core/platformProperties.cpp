@@ -68,6 +68,16 @@ void platform_t::DeviceProperties(){
     Props["defines/" "pfloat8"]="double8";
   }
 
+  if(sizeof(hfloat)==4){
+    Props["defines/" "hfloat"]="float";
+    Props["defines/" "hfloat2"]="float2";
+    Props["defines/" "hfloat4"]="float4";
+    Props["defines/" "hfloat8"]="float8";
+  }
+  if(sizeof(hfloat)==2){
+    Props["defines/" "hfloat"]= hfloatString;
+  }
+
   
   if(sizeof(dlong)==4){
     Props["defines/" "dlong"]="int";
@@ -89,6 +99,8 @@ void platform_t::DeviceProperties(){
     Props["compiler_flags"] += "--use_fast_math ";
     Props["compiler_flags"] += "--fmad=true "; // compiler option for cuda
     Props["compiler_flags"] += "-Xptxas -dlcm=ca";
+    Props["compiler_flags"] += " -I /usr/local/cuda-12.3/include/";
+    //    Props["compiler_flags"] += "--keep";
     Props["defines/OCCA_USE_CUDA"] = 1;
   }
 

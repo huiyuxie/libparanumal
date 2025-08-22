@@ -895,10 +895,12 @@ static void xyztorst(const memory<dfloat> x,
   const int Npoints = x.length();
 
   // vertices of tetrahedron
-  dfloat v1[3] = {-1.0, -1./sqrt(3.), -1./sqrt(6.)};
-  dfloat v2[3] = { 1.0, -1./sqrt(3.), -1./sqrt(6.)};
-  dfloat v3[3] = { 0.0,  2./sqrt(3.), -1./sqrt(6.)};
-  dfloat v4[3] = { 0.0,  0.,           3./sqrt(6.)};
+  dfloat v1[3], v2[3], v3[3], v4[3];
+
+  v1[0] = -1.0; v1[1] =-1./sqrt(3.); v1[2] =-1./sqrt(6.);
+  v2[0] =  1.0; v2[1] =-1./sqrt(3.); v2[2] =-1./sqrt(6.);
+  v3[0] =  0.0; v3[1] = 2./sqrt(3.); v3[2] =-1./sqrt(6.);
+  v4[0] =  0.0; v4[1] = 0.;          v4[2] = 3./sqrt(6.);
 
   memory<dfloat> XYZ(3*Npoints);
   memory<dfloat> RST(3*Npoints);
@@ -991,10 +993,12 @@ void mesh_t::WarpBlendTransformTet3D(const int _N,
   }
 
   // vertices of tetrahedron
-  dfloat v1[3] = {-1.0, -1./sqrt(3.), -1./sqrt(6.)};
-  dfloat v2[3] = { 1.0, -1./sqrt(3.), -1./sqrt(6.)};
-  dfloat v3[3] = { 0.0,  2./sqrt(3.), -1./sqrt(6.)};
-  dfloat v4[3] = { 0.0,  0.,           3./sqrt(6.)};
+  dfloat v1[3], v2[3], v3[3], v4[3];
+
+  v1[0] = -1.0; v1[1] =-1./sqrt(3.); v1[2] =-1./sqrt(6.);
+  v2[0] =  1.0; v2[1] =-1./sqrt(3.); v2[2] =-1./sqrt(6.);
+  v3[0] =  0.0; v3[1] = 2./sqrt(3.); v3[2] =-1./sqrt(6.);
+  v4[0] =  0.0; v4[1] = 0.;          v4[2] = 3./sqrt(6.);
 
   // orthogonal axis tangents on faces 1-4
   dfloat t1[4][4], t2[4][4];

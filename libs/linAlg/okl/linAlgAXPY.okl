@@ -28,13 +28,37 @@ SOFTWARE.
                   const dfloat alpha,
                   @restrict const dfloat *x,
                   const dfloat beta,
-                  @restrict dfloat *y){
+                  @restrict dfloat *y, 
+                  int reverse){
 
-  for(dlong n=0;n<N;++n;@tile(p_blockSize,@outer,@inner)){
-    if (beta!=0)
+  for(dlong m=0;m<N;++m;@tile(p_blockSize,@outer,@inner)){
+    dlong n = reverse? N-1-m: m;
+    if (beta!=0){
       y[n] = alpha*x[n] + beta*y[n];
-    else
+    }
+    else{
       y[n] = alpha*x[n];
+    }
+  }
+}
+
+@kernel void axpync(const dlong N,
+                  const dfloat alpha,
+                  @restrict const dfloat *x,
+                  const dfloat beta,
+                  @restrict dfloat *y, 
+                  int reverse){
+
+  for(dlong m=0;m<N;++m;@tile(p_blockSize,@outer,@inner)){
+    dlong n = reverse? N-1-m: m;
+    if (beta!=0){
+      dfloat xn = ncLoad(x+n);
+      y[n] = alpha*xn + beta*y[n];
+    }
+    else{
+      dfloat xn = ncLoad(x+n);
+      y[n] = alpha*xn;
+    }
   }
 }
 

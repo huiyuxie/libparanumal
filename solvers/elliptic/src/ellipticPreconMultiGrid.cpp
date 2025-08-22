@@ -1,4 +1,6 @@
+
 /*
+
 
 The MIT License (MIT)
 
@@ -25,14 +27,16 @@ SOFTWARE.
 */
 
 #include "ellipticPrecon.hpp"
-
+#include "parAlmond/parAlmondCoarseSolver.hpp"
+#include "timer.hpp"
 
 // Matrix-free p-Multigrid levels followed by AMG
 void MultiGridPrecon::Operator(deviceMemory<pfloat>& o_r, deviceMemory<pfloat>& o_Mr) {
-
-  //just pass to parAlmond
-  parAlmond.Operator(o_r, o_Mr);
-
+  
+  if (elliptic.multigridDriver==0){
+    //just pass to parAlmond
+    parAlmond.Operator(o_r, o_Mr);
+  }
   // zero mean of RHS
   if(elliptic.allNeumann) elliptic.ZeroMean(o_Mr);
 
@@ -94,6 +98,8 @@ MultiGridPrecon::MultiGridPrecon(elliptic_t& _elliptic):
     NpFine = NpCoarse;
   }
 
+  NumLevels_pmg = parAlmond.NumLevels() + 1; 
+  
   //build matrix at degree 1
   if (Comm::World().rank()==0){
     printf("-----------------------------Multigrid pMG Degree  1----------------------------------------\n");

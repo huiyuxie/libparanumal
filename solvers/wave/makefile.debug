@@ -1,4 +1,7 @@
-# Makefile.debug for debugging waveMain
+# Makefile.debug — debug build for wave + elliptic (+ libp libs)
+# - Rebuilds libelliptic and libp libs with debug flags
+# - Relinks waveMain if any dependent library changes
+# - Clean wipes wave, elliptic, libp, and OCCA cache
 
 ifndef LIBP_MAKETOP_LOADED
   ifeq (,$(wildcard ../../make.top))
@@ -8,32 +11,83 @@ ifndef LIBP_MAKETOP_LOADED
   endif
 endif
 
-ELLIPTIC_DIR := $(LIBP_DIR)/solvers/elliptic
-WAVE_LIBP_LIBS := parAlmond linearSolver mesh parAdogs ogs linAlg core timeStepper
- 
-INCLUDES := -I$(ELLIPTIC_DIR) $(LIBP_INCLUDES) -I.
-DEFINES  := $(LIBP_DEFINES) -DLIBP_DIR='"$(LIBP_DIR)"'
+# ---- Paths & libs (match your release makefile) ----
+ELLIPTIC_DIR      := $(LIBP_DIR)/solvers/elliptic
+ELLIPTIC_LIB      := $(ELLIPTIC_DIR)/libelliptic.a
 
-DEBUG_FLAGS := -g -O0
+WAVE_LIBP_LIBS    := parAlmond linearSolver mesh parAdogs ogs linAlg core timeStepper
+# We'll depend on the actual archive files so waveMain relinks if they change.
+LIBP_ARCHIVES     := $(addprefix $(LIBP_LIBS_DIR)/lib,$(addsuffix .a,$(WAVE_LIBP_LIBS)))
 
-WAVE_CXXFLAGS := $(LIBP_CXXFLAGS) $(DEFINES) $(INCLUDES) $(DEBUG_FLAGS)
-LDFLAGS       := $(WAVE_CXXFLAGS) \
-                  -L$(ELLIPTIC_DIR) -lelliptic \
-                  -L$(LIBP_LIBS_DIR) $(addprefix -l,$(WAVE_LIBP_LIBS)) $(LIBP_LIBS)
+# ---- Includes/defines (same as release, plus debug) ----
+INCLUDES          := -I$(ELLIPTIC_DIR) $(LIBP_INCLUDES) -I.
+DEFINES           := $(LIBP_DEFINES) -DLIBP_DIR='"$(LIBP_DIR)"'
 
-SRC  := $(wildcard src/*.cpp) waveMain.cpp
-OBJS := $(SRC:.cpp=.o)
+# ---- Debug flags ----
+DEBUG_FLAGS       := -g -O0 -fno-omit-frame-pointer -fno-inline -DDEBUG
 
+# If you want device-side CUDA JIT debug for OCCA kernels, uncomment:
+# export OCCA_CUDA_COMPILER_FLAGS := -G -lineinfo
+
+# ---- Compile & link flags for this target ----
+WAVE_CXXFLAGS     := $(LIBP_CXXFLAGS) $(DEFINES) $(INCLUDES) $(DEBUG_FLAGS)
+LDFLAGS           := $(WAVE_CXXFLAGS) \
+                     -L$(ELLIPTIC_DIR) -lelliptic \
+                     -L$(LIBP_LIBS_DIR) $(addprefix -l,$(WAVE_LIBP_LIBS)) $(LIBP_LIBS)
+
+# ---- Sources/objects ----
+CPP_SRC           := $(wildcard src/*.cpp)
+MAIN_SRC          := waveMain.cpp
+SRC               := $(CPP_SRC) $(MAIN_SRC)
+OBJS              := $(SRC:.cpp=.o)
+
+# ---- Defaults ----
+.PHONY: all clean info rebuild
 all: waveMain
 
-waveMain: $(OBJS)
-	$(LIBP_LD) -o $@ $^ $(LDFLAGS)
+# ---- Build rules ----
+# Ensure libp libs are built (debug) when any of their archives are needed
+$(LIBP_ARCHIVES):
+	@$(MAKE) -C $(LIBP_LIBS_DIR) $(WAVE_LIBP_LIBS) \
+		LIBP_CXXFLAGS="$(LIBP_CXXFLAGS) $(DEBUG_FLAGS)" --no-print-directory
 
+# Ensure libelliptic.a is built (debug) when needed
+$(ELLIPTIC_LIB): $(LIBP_ARCHIVES)
+	@$(MAKE) -C $(ELLIPTIC_DIR) lib \
+		LIBP_CXXFLAGS="$(LIBP_CXXFLAGS) $(DEBUG_FLAGS)" --no-print-directory
+
+# Link waveMain; depend on real library files so it relinks when they change
+waveMain: $(OBJS) $(ELLIPTIC_LIB) $(LIBP_ARCHIVES)
+	$(LIBP_LD) -o $@ $(OBJS) $(LDFLAGS)
+
+# Compile objects with debug flags
 %.o: %.cpp
 	@echo "Compiling (debug) $<"
 	$(LIBP_CXX) -c $< -o $@ $(WAVE_CXXFLAGS)
 
+# ---- Utilities ----
 clean:
-	rm -f src/*.o waveMain.o waveMain
+	@echo "Cleaning wave (objs/bin)…"
+	rm -f src/*.o waveMain.o waveMain libwave.a
+	@echo "Cleaning elliptic…"
+	@$(MAKE) -C $(ELLIPTIC_DIR) clean --no-print-directory || true
+	@echo "Cleaning libp libs…"
+	@$(MAKE) -C $(LIBP_LIBS_DIR) clean --no-print-directory || true
+	@echo "Cleaning OCCA cache…"
+	@rm -rf $(LIBP_DIR)/.occa/
 
-.PHONY: all clean
+# Deep clean (optional): also nuke third-party builds if your sub-makes support it
+realclean: clean
+	@$(MAKE) -C $(LIBP_LIBS_DIR) realclean --no-print-directory || true
+
+rebuild: clean all
+
+info:
+	@echo "LIBP_DIR      = $(LIBP_DIR)"
+	@echo "ELLIPTIC_DIR  = $(ELLIPTIC_DIR)"
+	@echo "ELLIPTIC_LIB  = $(ELLIPTIC_LIB)"
+	@echo "LIBP_LIBS_DIR = $(LIBP_LIBS_DIR)"
+	@echo "LIBP_ARCHIVES = $(LIBP_ARCHIVES)"
+	@echo "CXX           = $(LIBP_CXX)"
+	@echo "CXXFLAGS      = $(WAVE_CXXFLAGS)"
+	@echo "LDFLAGS       = $(LDFLAGS)"

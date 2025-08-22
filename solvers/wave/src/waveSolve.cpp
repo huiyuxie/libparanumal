@@ -106,7 +106,7 @@ void wave_t::Solve(deviceMemory<dfloat>& o_rDL,
                         o_DrhsL);
 
       // record local RHS
-      if(esc) esc->setLocalRHS(o_DrhsL);
+      /* if(esc) esc->setLocalRHS(o_DrhsL); */
 
       diagnostic(mesh.Nelements * mesh.Np, mesh, platform, o_DrhsL, "DrhsL");
 
@@ -121,13 +121,8 @@ void wave_t::Solve(deviceMemory<dfloat>& o_rDL,
       }
 
       // changed to tol
-      int iterD = elliptic.Solve(linearSolver,
-                                 o_Dtilde,
-                                 o_Drhs,
-                                 tol,
-                                 maxIter,
-                                 verbose,
-                                 stoppingCriteria);
+      int iterD =
+          elliptic.Solve(linearSolver, o_Dtilde, o_Drhs, tol, maxIter, verbose);
       cumIter += iterD;
 
       if(disc_c0) {

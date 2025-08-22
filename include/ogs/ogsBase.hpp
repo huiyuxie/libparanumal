@@ -76,8 +76,9 @@ public:
                       platform_t& _platform);
   void Free();
 
-protected:
   std::shared_ptr<ogsOperator_t> gatherLocal;
+
+protected:
   std::shared_ptr<ogsOperator_t> gatherHalo;
   std::shared_ptr<ogsExchange_t> exchange;
 
