@@ -23,9 +23,11 @@ jobs:
       run: make -C solvers/wave -j `nproc` verbose=true
       env:
         LIBP_COVERAGE: 1
-    - name: Test Wave Solver
-      run: |
-        make -C solvers/wave test
-        bash <(curl --no-buffer -s https://codecov.io/bash) -x gcov
-      env:
-        LIBP_COVERAGE: 1
+
+    # Disable tests for now since lack of GPU support on GitHub Actions runners
+    # - name: Test Wave Solver
+    #   run: |
+    #     make -C solvers/wave test
+    #     bash <(curl --no-buffer -s https://codecov.io/bash) -x gcov
+    #   env:
+    #     LIBP_COVERAGE: 1
