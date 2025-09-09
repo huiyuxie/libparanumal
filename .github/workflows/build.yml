@@ -19,12 +19,15 @@ jobs:
     - name: Install Dependencies
       run: |
           sudo apt install -y libopenmpi-dev openmpi-bin libopenblas-serial-dev
-    - name: Build
-      run: make -j `nproc` verbose=true
+    - name: Build Wave Solver
+      run: |
+        cd libparanumal/solvers/wave
+        make -j `nproc` verbose=true
       env:
         LIBP_COVERAGE: 1
-    - name: Test
+    - name: Test Wave Solver
       run: |
+        cd libparanumal/solvers/wave
         make test
         bash <(curl --no-buffer -s https://codecov.io/bash) -x gcov
       env:
