@@ -15,17 +15,19 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       with:
-        submodules: true
+        submodules: recursive
     - name: Install Dependencies
       run: |
           sudo apt install -y libopenmpi-dev openmpi-bin libopenblas-serial-dev
-    - name: Build
-      run: make -j `nproc` verbose=true
+    - name: Build Wave Solver
+      run: make -C solvers/wave -j `nproc` verbose=true
       env:
         LIBP_COVERAGE: 1
-    - name: Test
-      run: |
-        make test
-        bash <(curl --no-buffer -s https://codecov.io/bash) -x gcov
-      env:
-        LIBP_COVERAGE: 1
+
+    # Disable tests for now since lack of GPU support on GitHub Actions runners
+    # - name: Test Wave Solver
+    #   run: |
+    #     make -C solvers/wave test
+    #     bash <(curl --no-buffer -s https://codecov.io/bash) -x gcov
+    #   env:
+    #     LIBP_COVERAGE: 1
