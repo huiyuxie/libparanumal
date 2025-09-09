@@ -16,7 +16,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: recursive
-        fetch-depth: 0
     - name: Install Dependencies
       run: |
           sudo apt install -y libopenmpi-dev openmpi-bin libopenblas-serial-dev
