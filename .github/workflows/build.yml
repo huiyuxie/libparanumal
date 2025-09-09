@@ -20,15 +20,12 @@ jobs:
       run: |
           sudo apt install -y libopenmpi-dev openmpi-bin libopenblas-serial-dev
     - name: Build Wave Solver
-      run: |
-        cd libparanumal/solvers/wave
-        make -j `nproc` verbose=true
+      run: make -C solvers/wave -j `nproc` verbose=true
       env:
         LIBP_COVERAGE: 1
     - name: Test Wave Solver
       run: |
-        cd libparanumal/solvers/wave
-        make test
+        make -C solvers/wave test
         bash <(curl --no-buffer -s https://codecov.io/bash) -x gcov
       env:
         LIBP_COVERAGE: 1
