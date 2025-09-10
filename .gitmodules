@@ -1,3 +1,4 @@
 [submodule "occa"]
 	path = occa
 	url = git@github.com:libocca/occa.git
+	branch = main
