@@ -177,6 +177,39 @@ void ogsOperator_t::Gather(deviceMemory<T> o_gv,
                            deviceMemory<T> o_v,
                            const int k,
                            const Op op,
+                           const Transpose trans,
+                           const bool dir) {
+  constexpr Type type = ogsType<T>::get();
+  InitializeKernels(platform, type, op);
+
+  if (trans==NoTrans) {
+    if (NrowBlocksN)
+      gatherKernel[type][op](NrowBlocksN,
+                              k,
+                              o_blockRowStartsN,
+                              o_rowStartsN,
+                              o_colIdsN,
+                              o_v,
+                              o_gv,
+                              dir);
+  } else {
+    if (NrowBlocksT)
+      gatherKernel[type][op](NrowBlocksT,
+                              k,
+                              o_blockRowStartsT,
+                              o_rowStartsT,
+                              o_colIdsT,
+                              o_v,
+                              o_gv,
+                              dir);
+  }
+}
+
+template<typename T>
+void ogsOperator_t::Gather(deviceMemory<T> o_gv,
+                           deviceMemory<T> o_v,
+                           const int k,
+                           const Op op,
                            const Transpose trans) {
   constexpr Type type = ogsType<T>::get();
   InitializeKernels(platform, type, op);
@@ -189,7 +222,8 @@ void ogsOperator_t::Gather(deviceMemory<T> o_gv,
                               o_rowStartsN,
                               o_colIdsN,
                               o_v,
-                              o_gv);
+                              o_gv,
+                              0);
   } else {
     if (NrowBlocksT)
       gatherKernel[type][op](NrowBlocksT,
@@ -198,13 +232,17 @@ void ogsOperator_t::Gather(deviceMemory<T> o_gv,
                               o_rowStartsT,
                               o_colIdsT,
                               o_v,
-                              o_gv);
+                              o_gv,
+                              0);
   }
 }
 
 template
 void ogsOperator_t::Gather(deviceMemory<float> gv, const deviceMemory<float> v,
                            const int k, const Op op, const Transpose trans);
+template
+void ogsOperator_t::Gather(deviceMemory<double> gv, const deviceMemory<double> v,
+                           const int k, const Op op, const Transpose trans, const bool dir);
 template
 void ogsOperator_t::Gather(deviceMemory<double> gv, const deviceMemory<double> v,
                            const int k, const Op op, const Transpose trans);

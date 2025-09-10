@@ -24,13 +24,38 @@ SOFTWARE.
 
 */
 
+// @kernel void amx(const dlong N,
+//                  const dfloat alpha,
+//                  @restrict const dfloat *a,
+//                  @restrict       dfloat *x){
+
+//   for(dlong n=0;n<N;++n;@tile(p_blockSize,@outer,@inner)){
+//     x[n] = alpha*a[n]*x[n];
+//   }
+// }
+
 @kernel void amx(const dlong N,
                  const dfloat alpha,
                  @restrict const dfloat *a,
-                 @restrict       dfloat *x){
+                 @restrict       dfloat *x,
+		 int reverse){
 
-  for(dlong n=0;n<N;++n;@tile(p_blockSize,@outer,@inner)){
+  for(dlong m=0;m<N;++m;@tile(p_blockSize,@outer,@inner)){
+    dlong n = reverse? N-1-m: m;    
     x[n] = alpha*a[n]*x[n];
+  }
+}
+
+@kernel void amxnc(const dlong N,
+                 const dfloat alpha,
+                 @restrict const dfloat *a,
+                 @restrict       dfloat *x,
+		 int reverse){
+
+  for(dlong m=0;m<N;++m;@tile(p_blockSize,@outer,@inner)){
+    dlong n = reverse? N-1-m: m;
+    dfloat an = ncLoad(a+n);
+    x[n] = alpha*an*x[n];
   }
 }
 
@@ -39,13 +64,39 @@ SOFTWARE.
                    @restrict const dfloat *a,
                    @restrict const dfloat *x,
                    const dfloat beta,
-                   @restrict dfloat *y){
+                   @restrict dfloat *y,
+                   bool reverse){
 
-  for(dlong n=0;n<N;++n;@tile(p_blockSize,@outer,@inner)){
+  for(dlong m=0;m<N;++m;@tile(p_blockSize,@outer,@inner)){
+    dlong n = reverse? N-1-m: m;
     if (beta!=0)
       y[n] = alpha*a[n]*x[n] + beta*y[n];
-    else
+    else{
       y[n] = alpha*a[n]*x[n];
+    }
+  }
+}
+
+@kernel void amxpync(const dlong N,
+                   const dfloat alpha,
+                   @restrict const dfloat *a,
+                   @restrict const dfloat *x,
+                   const dfloat beta,
+                   @restrict dfloat *y,
+                   bool reverse){
+
+  for(dlong m=0;m<N;++m;@tile(p_blockSize,@outer,@inner)){
+    dlong n = reverse? N-1-m: m;
+    if (beta!=0){
+      dfloat an = ncLoad(a+n);
+      dfloat xn = ncLoad(x+n);
+      y[n] = alpha * an * xn + beta*y[n];
+    }
+    else{
+      dfloat an = ncLoad(a+n);
+      dfloat xn = ncLoad(x+n);
+      y[n] = alpha * an * xn;
+    }
   }
 }
 

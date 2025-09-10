@@ -60,7 +60,7 @@ Last<T>::Last(dlong _N, platform_t& _platform, settings_t& _settings, comm_t _co
   initialGuessStrategy_t(_N, _platform, _settings, _comm)
 {
   this->platform.linAlg().InitKernels({"set"});
-  o_xLast = this->platform.malloc<T>(Ntotal);
+  o_xLast = this->platform.template malloc<T>(Ntotal);
   this->platform.linAlg().set(Ntotal, (T)0.0, o_xLast);
 }
 

@@ -291,6 +291,14 @@ public:
               const int k,
               const Op op,
               const Transpose trans);
+  template<typename T>
+  void Gather(deviceMemory<T> o_gv,
+              deviceMemory<T> o_v,
+              const int k,
+              const Op op,
+              const Transpose trans,
+              const bool dir);
+
   // Asynchronous device buffer versions
   template<typename T>
   void GatherStart (deviceMemory<T> o_gv,

@@ -70,8 +70,8 @@ class platform_t {
   std::shared_ptr<internal::iplatform_t> iplatform;
   std::shared_ptr<linAlg_t> ilinAlg;
 
-  memPool_t deviceMemPool;
-  memPool_t pinnedMemPool;
+  occa::experimental::memoryPool deviceMemPool;
+  occa::experimental::memoryPool pinnedMemPool;
 
 public:
   platform_t()=default;

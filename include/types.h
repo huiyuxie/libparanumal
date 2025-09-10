@@ -24,6 +24,10 @@ SOFTWARE.
 
 */
 
+#include "cuda_fp16.h"
+#include "cuda_bf16.h"
+
+
 #ifndef TYPES_HPP
 #define TYPES_HPP
 
@@ -39,13 +43,32 @@ SOFTWARE.
 #endif
 
 // precision of preconditioners
-#if 0
+#if 1
 #define pfloat float
 #define pfloatString "float"
 #else
 #define pfloat double
 #define pfloatString "double"
 #endif
+
+// precision of low-precision preconditioners
+#if 1
+    #define hfloat __half
+    #define hfloatString "__half"
+    #define hfloat2pfloatString "__half2float"
+    #define pfloat2hfloatString "__float2half"
+#elif 0
+    #define hfloat __nv_bfloat16
+    #define hfloatString "__nv_bfloat16"
+    #define hfloat2pfloatString "__bfloat162float"
+    #define pfloat2hfloatString "__float2bfloat16"
+#else
+    #define hfloat float
+    #define hfloatString "float"
+    #define hfloat2pfloatString " "
+    #define pfloat2hfloatString " "
+#endif
+
 
 //host index data type
 #if 0

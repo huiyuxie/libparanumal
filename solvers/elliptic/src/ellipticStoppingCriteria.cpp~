@@ -216,7 +216,7 @@ int ellipticStoppingCriteria<T>::stopTest(int iteration,
                                        deviceMemory<T> &o_r,
                                        T rdotr, T TOL){
 
-  mesh_t &mesh = elliptic->mesh;
+  /* mesh_t &mesh = elliptic->mesh; */ // not used
 
   {
 #if 0

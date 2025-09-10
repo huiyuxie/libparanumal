@@ -149,8 +149,8 @@ class wave_t : public solver_t {
   deviceMemory<dfloat> o_invWJ;
   deviceMemory<dfloat> o_WJ;
 
-  stoppingCriteria_t<dfloat>*       stoppingCriteria = NULL;
-  ellipticStoppingCriteria<dfloat>* esc              = NULL;
+  /* stoppingCriteria_t<dfloat>*       stoppingCriteria = NULL;
+  ellipticStoppingCriteria<dfloat>* esc              = NULL; */
 
   kernel_t waveStageUpdateKernel;
   kernel_t waveCombineKernel;

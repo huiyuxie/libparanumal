@@ -27,10 +27,13 @@ SOFTWARE.
 // copy a dfloat array to pfloat
 @kernel void d2p(const dlong N,
 		 @restrict const dfloat *d,
-		 @restrict pfloat *p){
+		 @restrict pfloat *p, 
+     int reverse){
 
-  for(dlong n=0;n<N;++n;@tile(p_blockSize,@outer,@inner)){
-    p[n] = d[n];
+  for(dlong m=0;m<N;++m;@tile(p_blockSize,@outer,@inner)){
+    dlong n = reverse? N-1-m: m;
+    dfloat tmp = __ldcs(d + n);
+    p[n] = tmp;
   }
 }
 
@@ -38,9 +41,12 @@ SOFTWARE.
 // copy a pfloat array to dfloat
 @kernel void p2d(const dlong N,
 		 @restrict const pfloat *p,
-		 @restrict dfloat *d){
+		 @restrict dfloat *d,
+     int reverse){
 
-  for(dlong n=0;n<N;++n;@tile(p_blockSize,@outer,@inner)){
-    d[n] = p[n];
+  for(dlong m=0;m<N;++m;@tile(p_blockSize,@outer,@inner)){
+    dlong n = reverse? N-1-m: m;
+    pfloat tmp = __ldcs(p + n);
+    d[n] = tmp;
   }
 }

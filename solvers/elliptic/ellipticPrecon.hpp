@@ -77,14 +77,16 @@ public:
 
 // Matrix-free p-Multigrid levels followed by AMG
 class MultiGridPrecon: public operator_t {
-private:
+  //private:
+public:
   elliptic_t elliptic;
   mesh_t mesh;
   settings_t settings;
 
   parAlmond::parAlmond_t parAlmond;
+  int NumLevels_pmg;
 
-public:
+  //public:
 
   MultiGridPrecon() = default;
   MultiGridPrecon(elliptic_t& elliptic);
@@ -128,9 +130,15 @@ public:
   //  memory<pfloat> P;
   deviceMemory<pfloat> o_P;
 
-  kernel_t coarsenKernel, partialCoarsenKernel;
+  kernel_t coarsenKernel, partialCoarsenKernel, coarsenGatherKernel;
   kernel_t prolongateKernel, partialProlongateKernel;
+  kernel_t floatProlongateAxGatherKernel, floatProlongateAxGatherncKernel;
+  kernel_t floatProlongateAxTrilinearGatherKernel, floatProlongateAxInterpGatherKernel;
+  kernel_t AxCoarsenKernel;
 
+  //half precision
+  kernel_t halfCoarsenGatherKernel, halfProlongateAxTrilinearGatherKernel;
+  
   //coarse space
   elliptic_t ellipticC;
   mesh_t meshC;
@@ -145,7 +153,8 @@ public:
 
   //jacobi data
   deviceMemory<pfloat> o_invDiagA;
-
+  deviceMemory<__half> o_half_invDiagA;
+  
   //build a p-multigrid level and connect it to the next one
   MGLevel() = default;
   MGLevel(elliptic_t& _elliptic,

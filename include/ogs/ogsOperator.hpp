@@ -83,6 +83,9 @@ public:
   template<typename T>
   void Gather(deviceMemory<T> gv, const deviceMemory<T> v,
               const int k, const Op op, const Transpose trans);
+  template<typename T>
+  void Gather(deviceMemory<T> gv, const deviceMemory<T> v,
+              const int k, const Op op, const Transpose trans, const bool dir);
 
   //Apply Z^T transpose operator
   template<template<typename> class U,

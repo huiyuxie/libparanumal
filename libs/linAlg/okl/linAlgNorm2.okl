@@ -24,71 +24,131 @@ SOFTWARE.
 
 */
 
+//using namespace sycl;
+#if OCCA_USE_DPCPP==1
+#if defined(__SYCL_DEVICE_ONLY__) && defined(TEST_CONSTANT_AS)
+#define FORMAT_STRING(X) static const __attribute__((opencl_constant)) char X[]
+#else
+#define FORMAT_STRING(X) static const char X[]
+#endif
+#endif
+
+#define p_mask 0xffffffff
+#define p_Nwarp 8
+#define p_warpSize 32
+
 @kernel void norm2(const dlong Nblocks,
                    const dlong N,
-                  @restrict const  dfloat *x,
-                  @restrict        dfloat *norm){
+                   const dlong Nreads,
+                   const dfloat *x,
+                   dfloat *dot,
+                   const int dir)
+{
+  for (dlong bi = 0; bi < Nblocks; ++bi; @outer(0))
+  {
+     @shared volatile dfloat s_dot[p_Nwarp];
+#if OCCA_USE_DPCPP==1
+    @shared volatile dfloat s_tmp[p_Nwarp][p_warpSize];
+#endif
 
-
-  for(dlong b=0;b<Nblocks;++b;@outer(0)){
-
-    @shared dfloat s_norm[p_blockSize];
-
-    for(int t=0;t<p_blockSize;++t;@inner(0)){
-      dlong id = t + b*p_blockSize;
-
-      dfloat r_norm = 0.0;
-      while (id<N) {
-        r_norm += x[id]*x[id];
-        id += p_blockSize*Nblocks;
+    @exclusive dlong b;
+    @exclusive dfloat r_dot;
+    
+    for (int w = 0; w < p_Nwarp; ++w; @inner(1)){
+      for (int t = 0; t < p_warpSize; ++t; @inner(0)){
+	
+	//        b = (dir) ? (Nblocks - 1 - bi): bi;
+	b = bi;
+        r_dot = 0.0;
+	
+        for (int r = 0; r < Nreads; ++r)
+        {
+          dlong id = t + p_warpSize * (r + Nreads * (w + b * p_Nwarp));
+	  dfloat xm = 0;
+	  if(id>=0 && id<N)
+	    xm = x[id];
+          r_dot += xm*xm;
+        }	
       }
-      s_norm[t] = r_norm;
     }
 
-#if p_blockSize>512
-    for(int t=0;t<p_blockSize;++t;@inner(0)) if(t<512) s_norm[t] += s_norm[t+512];
-#endif
-#if p_blockSize>256
-    for(int t=0;t<p_blockSize;++t;@inner(0)) if(t<256) s_norm[t] += s_norm[t+256];
-#endif
-    for(int t=0;t<p_blockSize;++t;@inner(0)) if(t<128) s_norm[t] += s_norm[t+128];
-    for(int t=0;t<p_blockSize;++t;@inner(0)) if(t< 64) s_norm[t] += s_norm[t+ 64];
-    for(int t=0;t<p_blockSize;++t;@inner(0)) if(t< 32) s_norm[t] += s_norm[t+ 32];
-    for(int t=0;t<p_blockSize;++t;@inner(0)) if(t< 16) s_norm[t] += s_norm[t+ 16];
-    for(int t=0;t<p_blockSize;++t;@inner(0)) if(t<  8) s_norm[t] += s_norm[t+  8];
-    for(int t=0;t<p_blockSize;++t;@inner(0)) if(t<  4) s_norm[t] += s_norm[t+  4];
-    for(int t=0;t<p_blockSize;++t;@inner(0)) if(t<  2) s_norm[t] += s_norm[t+  2];
-    for(int t=0;t<p_blockSize;++t;@inner(0)) if(t<  1) norm[b] = s_norm[0] + s_norm[1];
-  }
-
-
-  for(dlong b=0;b<1;++b;@outer(0)){
-
-    @shared dfloat s_norm[p_blockSize];
-
-    for(int t=0;t<p_blockSize;++t;@inner(0)){
-      dlong id = t;
-      dfloat r_norm = 0.0;
-      while (id<Nblocks) {
-        r_norm += norm[id];
-        id += p_blockSize;
+#if OCCA_USE_CUDA==1
+    for (int w = 0; w < p_Nwarp; ++w; @inner(1)){
+      for (int t = 0; t < p_warpSize; ++t; @inner(0)){
+	for (int offset = 16; offset > 0; offset /= 2) {
+          r_dot += __shfl_down_sync(p_mask, r_dot, offset, 32);
+        }
+	if (t == 0){
+          s_dot[w] = r_dot;
+        }
       }
-      s_norm[t] = r_norm;
+    }
+        
+    @barrier();
+
+    for (int w = 0; w < p_Nwarp; ++w; @inner(1)){
+      for (int t = 0; t < p_warpSize; ++t; @inner(0)){
+	
+	if (w == 0){
+	  r_dot = (t < p_Nwarp) ? s_dot[t] : (dfloat)0.0;
+	  for (int offset = p_Nwarp/2; offset > 0; offset /= 2) {
+	    r_dot += __shfl_down_sync(p_mask, r_dot, offset, 32);
+	  }
+	  if(t==0)
+	    @atomic *dot += r_dot;
+	}
+      }
+    }
+#endif
+    
+#if OCCA_USE_DPCPP==1
+    for (int w = 0; w < p_Nwarp; ++w; @inner(1)){
+      for (int t = 0; t < p_warpSize; ++t; @inner(0)){
+	s_tmp[w][t] = r_dot;
+      }
+    }
+    
+    for (int offset = p_warpSize/2; offset > 0; offset /= 2) {
+      @barrier();
+      for (int w = 0; w < p_Nwarp; ++w; @inner(1)){
+	for (int t = 0; t < p_warpSize; ++t; @inner(0)){
+	  if(t<offset){
+	    s_tmp[w][t] += s_tmp[w][t+offset];
+	  }
+        }
+      }
     }
 
-#if p_blockSize>512
-    for(int t=0;t<p_blockSize;++t;@inner(0)) if(t<512) s_norm[t] += s_norm[t+512];
+    for (int w = 0; w < p_Nwarp; ++w; @inner(1)){
+      for (int t = 0; t < p_warpSize; ++t; @inner(0)){
+	if(t==0){
+	  s_dot[w] = s_tmp[w][0];
+	}
+      }
+    }
+
+    for (int offset = p_Nwarp/2; offset > 0; offset /= 2) {
+      @barrier();
+      for (int w = 0; w < p_Nwarp; ++w; @inner(1)){
+	for (int t = 0; t < p_warpSize; ++t; @inner(0)){
+	  
+	  if(w==0 && t<offset)
+	    s_dot[t] += s_dot[t+offset];
+	}
+      }
+    }
+    
+    for (int w = 0; w < p_Nwarp; ++w; @inner(1)){
+      for (int t = 0; t < p_warpSize; ++t; @inner(0)){
+	if(w==0 && t==0){
+	  r_dot = s_dot[0];
+	  FORMAT_STRING(fmt_out) = "r_dot: %lg\n";
+	  ext::oneapi::experimental::printf(fmt_out, r_dot);
+	  
+	  @atomic *dot += r_dot;
+        }
+      }
+    }    
 #endif
-#if p_blockSize>256
-    for(int t=0;t<p_blockSize;++t;@inner(0)) if(t<256) s_norm[t] += s_norm[t+256];
-#endif
-    for(int t=0;t<p_blockSize;++t;@inner(0)) if(t<128) s_norm[t] += s_norm[t+128];
-    for(int t=0;t<p_blockSize;++t;@inner(0)) if(t< 64) s_norm[t] += s_norm[t+ 64];
-    for(int t=0;t<p_blockSize;++t;@inner(0)) if(t< 32) s_norm[t] += s_norm[t+ 32];
-    for(int t=0;t<p_blockSize;++t;@inner(0)) if(t< 16) s_norm[t] += s_norm[t+ 16];
-    for(int t=0;t<p_blockSize;++t;@inner(0)) if(t<  8) s_norm[t] += s_norm[t+  8];
-    for(int t=0;t<p_blockSize;++t;@inner(0)) if(t<  4) s_norm[t] += s_norm[t+  4];
-    for(int t=0;t<p_blockSize;++t;@inner(0)) if(t<  2) s_norm[t] += s_norm[t+  2];
-    for(int t=0;t<p_blockSize;++t;@inner(0)) if(t<  1) norm[0] = s_norm[0] + s_norm[1];
   }
 }
