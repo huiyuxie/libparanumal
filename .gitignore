@@ -21,6 +21,8 @@
 *.orig
 *.out
 *.msh
+*.bin
+*.ncu-rep
 
 **/*.o
 **/*.c~
@@ -37,6 +39,4 @@ test/*.rc
 .vimrc
 .occa/
 
-.vscode/
 .clang-format
-*.ncu-rep
