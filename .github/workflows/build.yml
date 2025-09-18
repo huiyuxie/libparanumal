@@ -19,12 +19,14 @@ jobs:
     - name: Install Dependencies
       run: |
           sudo apt install -y libopenmpi-dev openmpi-bin libopenblas-serial-dev
-    - name: Build Wave Solver
-      run: make -C solvers/wave -j `nproc` verbose=true
-      env:
-        LIBP_COVERAGE: 1
 
-    # Disable tests for now since lack of GPU support on GitHub Actions runners
+    # Disable build and test since lack of GPU support on GitHub Actions runners
+
+    # - name: Build Wave Solver
+    #   run: make -C solvers/wave -j `nproc` verbose=true
+    #   env:
+    #     LIBP_COVERAGE: 1
+
     # - name: Test Wave Solver
     #   run: |
     #     make -C solvers/wave test
