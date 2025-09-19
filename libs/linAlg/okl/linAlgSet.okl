@@ -27,9 +27,22 @@ SOFTWARE.
 //set every entry of a vector to a constant scalar
 @kernel void set(const dlong N,
                  const dfloat alpha,
-                 @restrict dfloat *a){
+                 @restrict dfloat *a,
+                 int reverse){
 
-  for(dlong n=0;n<N;++n;@tile(p_blockSize,@outer,@inner)){
+  for(dlong m=0;m<N;++m;@tile(p_blockSize,@outer,@inner)){
+    dlong n = reverse? N-1-m: m;
     a[n] = alpha;
+  }
+}
+
+@kernel void setnc(const dlong N,
+                 const dfloat alpha,
+                 @restrict dfloat *a,
+                 int reverse){
+
+  for(dlong m=0;m<N;++m;@tile(p_blockSize,@outer,@inner)){
+    dlong n = reverse? N-1-m: m;
+    ncStore(a+n, alpha);
   }
 }

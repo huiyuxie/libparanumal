@@ -89,12 +89,15 @@ SOFTWARE.
                    @restrict const dlong *gatherStarts,
                    @restrict const dlong *gatherIds,
                    @restrict const     T *q,
-                   @restrict           T *gatherq){
+                   @restrict           T *gatherq,
+                   const bool dir){
 
   for(dlong k=0;k<K;++k;@outer(1)){
-    for(dlong b=0;b<Nblocks;++b;@outer(0)){
+    for(dlong bi=0;bi<Nblocks;++bi;@outer(0)){
       @exclusive dlong blockStart, blockEnd, start;
       @shared T temp[p_gatherNodesPerBlock];
+
+      dlong b = (dir) ? Nblocks-1-bi:bi; 
 
       for(dlong n=0;n<p_blockSize;++n;@inner(0)){
         blockStart = blockStarts[b];

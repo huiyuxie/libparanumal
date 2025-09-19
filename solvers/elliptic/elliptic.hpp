@@ -32,15 +32,19 @@ SOFTWARE.
 #include "mesh.hpp"
 #include "solver.hpp"
 #include "linAlg.hpp"
-#include "linAlgMatrix.hpp"
 #include "precon.hpp"
 #include "linearSolver.hpp"
 #include "parAlmond.hpp"
+#include "ogs.hpp"
+#include "ogs/ogsOperator.hpp"
 #include "stoppingCriteria.hpp"
+#include <cuda_fp16.h>
 
 #define DELLIPTIC LIBP_DIR"/solvers/elliptic/"
 
 using namespace libp;
+
+// Matrix-free p-Multigrid levels followed by AMG                                                                     
 
 class ellipticSettings_t: public settings_t {
 public:
@@ -67,10 +71,12 @@ public:
 
   int disc_ipdg, disc_c0;
 
+  int multigridDriver = 0;
+  
   ogs::halo_t traceHalo;
 
   precon_t precon;
-
+  
   // NOTE pfloat
   memory<pfloat> weight, weightG;
   deviceMemory<pfloat> o_weight, o_weightG;
@@ -78,6 +84,7 @@ public:
   //C0-FEM mask data
   ogs::ogs_t ogsMasked;
   ogs::halo_t gHalo;
+  ogs::ogsOperator_t ogsOp;
   memory<int> mapB;      // boundary flag of face nodes
   deviceMemory<int> o_mapB;
 
@@ -87,28 +94,182 @@ public:
   memory<hlong> maskedGlobalNumbering;
   memory<dlong> GlobalToLocal;
 
+  // for coloring Ax
+  int NsetE; 
+  memory<hlong> NeleS;
+  
   deviceMemory<dlong> o_maskIds;
   deviceMemory<dlong> o_GlobalToLocal;
+  deviceMemory<dlong> o_GlobalToLocalColor;
+  deviceMemory<dlong> o_localGatherElementList;
 
   int NBCTypes;
   memory<int> BCType;
   memory<int> EToB;
   deviceMemory<int> o_EToB;
 
+  deviceMemory<dfloat> o_double_invDiagA;
+  deviceMemory<pfloat> o_invDiagA;
+  deviceMemory<hfloat> o_half_invDiagA;
+  
   int allNeumann;
   dfloat allNeumannPenalty;
   dfloat allNeumannScale;
 
+  kernel_t floatUpdateCheby1Kernel;
+  kernel_t floatUpdateCheby1ncKernel;
+  kernel_t floatUpdateCheby2Kernel;
+  kernel_t floatUpdateCheby2ncKernel;
+  kernel_t floatUpdateCheby3Kernel;
+  kernel_t floatUpdateCheby3ncKernel;
+  kernel_t floatUpdateCheby4Kernel;
+  kernel_t floatUpdateCheby4ncKernel;
+  kernel_t floatUpdateCheby5Kernel;
+  kernel_t floatUpdateCheby5ncKernel;
+  
   kernel_t maskKernel;
   kernel_t partialAxKernel;
   kernel_t partialGradientKernel;
   kernel_t partialIpdgKernel;
 
+  kernel_t AxGatherKernel;
+  kernel_t AxGatherncKernel;
+  kernel_t AxGatherSmoothKernel;
+  kernel_t AxInterpGatherKernel;
+  kernel_t AxInterpGatherSmoothKernel;
+  kernel_t AxTrilinearGatherKernel;
+  kernel_t AxTrilinearGatherSmoothKernel;
+  kernel_t AxGatherDotKernel;
+  kernel_t AxTrilinearGatherDotKernel;
+  kernel_t AxGatherDotncKernel;
+  
   kernel_t floatPartialAxKernel;
+  kernel_t floatAxGatherKernel;
+  kernel_t floatAxGatherSmoothKernel;
+  kernel_t floatAxTrilinearGatherKernel;
+  kernel_t floatAxTrilinearGatherSmoothKernel;
+  kernel_t floatAxGatherncKernel;
+  kernel_t floatAxGatherDotKernel;  
+  kernel_t floatAxTrilinearGatherDotKernel;  
+  kernel_t floatAxGatherDotncKernel;
   kernel_t floatPartialGradientKernel;
   kernel_t floatPartialIpdgKernel;
+  kernel_t floatAxInterpGatherKernel;
+  kernel_t floatAxInterpGatherSmoothKernel;
 
+  // half precision kernels
+  kernel_t p2hKernel;
+  kernel_t h2pKernel;
+  kernel_t d2hKernel;
+  kernel_t norm2Kernel;
+  kernel_t setKernel;
+  kernel_t axpySetHalfKernel;
+  kernel_t axpyDoubleKernel;
+  kernel_t p2dInnerProdHalfKernel;
+  kernel_t p2dInnerProdHalfFloatKernel;
+  kernel_t updatePCGHalfKernel;
+  kernel_t updatePCGHalfFloatKernel;
+  kernel_t scaleHalfKernel;
+  kernel_t scaleP2hHalfKernel;
+  kernel_t zamxHalfKernel;
+  kernel_t zamx_Half2_D_Kernel;
+  kernel_t zamx_Half2_F_Kernel;
+  kernel_t updateCheby4HalfKernel;
+  kernel_t updateCheby5HalfKernel;
+  kernel_t updateCheby1HalfKernel;
+  kernel_t halfAxTrilinearGatherSmoothKernel;
+  kernel_t halfAxTrilinearGatherKernel;
+  kernel_t halfFloatAxTrilinearGatherKernel;
+  
+  kernel_t axpySetKernel;
+  kernel_t axpySetncKernel;
+  kernel_t updatePCGKernel;
+  kernel_t p2dInnerProdKernel;
+  kernel_t updatePCGncKernel;
+  kernel_t p2dInnerProdncKernel;
+  kernel_t updatePCGDoubleKernel;
 
+  kernel_t zamx_H_F_Kernel;
+  kernel_t zamx_F_F_Kernel;
+  kernel_t zamx_D_F_Kernel;
+  kernel_t zamx_H_D_Kernel;
+  kernel_t zamx_F_D_Kernel;
+  kernel_t zamx_D_D_Kernel;
+
+  kernel_t innerProd_H_F_Kernel;
+  kernel_t innerProd_F_F_Kernel;
+  kernel_t innerProd_D_F_Kernel;
+  kernel_t innerProd_H_D_Kernel;
+  kernel_t innerProd_F_D_Kernel;
+  kernel_t innerProd_D_D_Kernel;
+  kernel_t innerProd_Half2_D_Kernel;
+  kernel_t innerProd_Half2_F_Kernel;
+
+  kernel_t AxTrilinearGatherDot_H_F_Kernel;
+  kernel_t AxTrilinearGatherDot_F_F_Kernel;
+  kernel_t AxTrilinearGatherDot_D_F_Kernel;
+  kernel_t AxTrilinearGatherDot_H_D_Kernel;
+  kernel_t AxTrilinearGatherDot_F_D_Kernel;
+  kernel_t AxTrilinearGatherDot_D_D_Kernel;
+  
+  kernel_t updatePCGDouble_H_Kernel;
+  kernel_t updatePCGDouble_F_Kernel;
+  kernel_t updatePCGDouble_D_Kernel;
+  kernel_t updatePCGFloat_H_Kernel;
+  kernel_t updatePCGFloat_F_Kernel;
+  kernel_t updatePCGFloat_D_Kernel;
+
+  kernel_t axpy_H_Kernel;
+  kernel_t axpy_Half2_Kernel;
+  kernel_t axpy_F_Kernel;
+  kernel_t axpy_F2_Kernel;
+  kernel_t axpy_D_Kernel;
+
+  kernel_t p2dInnerProd_F_F_Kernel;
+  kernel_t p2dInnerProd_F_D_Kernel;
+  kernel_t p2dInnerProd_D_F_Kernel;
+  kernel_t p2dInnerProd_D_D_Kernel;
+
+  kernel_t AxGatherDot_F_F_Kernel;
+  kernel_t AxGatherDot_F_F_F_Kernel;
+  kernel_t AxGatherDot_F_D_F_Kernel;
+  kernel_t AxGatherDot_F_D_Kernel;
+  kernel_t AxGatherDot_D_F_Kernel;
+  kernel_t AxGatherDot_D_D_Kernel;
+
+  kernel_t AxGatherDotHalfKernel;
+  
+  kernel_t axpySet_F_F_F_Kernel;
+  kernel_t axpySet_F_F_D_Kernel;
+  kernel_t axpySet_F_D_F_Kernel;
+  kernel_t axpySet_F_D_D_Kernel;
+  kernel_t axpySet_D_F_F_Kernel;
+  kernel_t axpySet_D_F_D_Kernel;
+  kernel_t axpySet_D_D_F_Kernel;
+  kernel_t axpySet_D_D_D_Kernel;
+
+  kernel_t updatePCG_F_F_F_F_Kernel;
+  kernel_t updatePCG_F_F_D_F_Kernel;
+  kernel_t updatePCG_F_D_F_F_Kernel;
+  kernel_t updatePCG_F_D_D_F_Kernel;
+  kernel_t updatePCG_D_F_F_F_Kernel;
+  kernel_t updatePCG_D_F_D_F_Kernel;
+  kernel_t updatePCG_D_D_F_F_Kernel;
+  kernel_t updatePCG_D_D_D_F_Kernel;
+  kernel_t updatePCG_F_F_F_D_Kernel;
+  kernel_t updatePCG_F_F_D_D_Kernel;
+  kernel_t updatePCG_F_D_F_D_Kernel;
+  kernel_t updatePCG_F_D_D_D_Kernel;
+  kernel_t updatePCG_D_F_F_D_Kernel;
+  kernel_t updatePCG_D_F_D_D_Kernel;
+  kernel_t updatePCG_D_D_F_D_Kernel;
+  kernel_t updatePCG_D_D_D_D_Kernel;
+
+  kernel_t cubatureH1ErrorKernel;
+  kernel_t cubatureH1L2ErrorKernel;
+  kernel_t rhsBCKernel;
+  kernel_t addBCKernel;
+  
   elliptic_t() = default;
   elliptic_t(platform_t &_platform, mesh_t &_mesh,
               settings_t& _settings, dfloat _lambda,
@@ -125,14 +286,14 @@ public:
 
   void Run();
 
-   void WaveSolver();
-
-   
+  dfloat ComputeError(deviceMemory<dfloat>& o_x);
+  
   int Solve(linearSolver_t<dfloat>& linearSolver, deviceMemory<dfloat> &o_x, deviceMemory<dfloat> &o_r,
-            const dfloat tol, const int MAXIT, const int verbose, stoppingCriteria_t<dfloat> *stoppingCriteria);
+            const dfloat tol, const int MAXIT, const int verbose);
 
   void PlotFields(memory<dfloat>& Q, std::string fileName);
 
+  void Operator(deviceMemory<double>& o_q, deviceMemory<double>& o_Aq, memory<bool> Rvt, const int offsetRvt);
   void Operator(deviceMemory<double>& o_q, deviceMemory<double>& o_Aq);
   void Operator(deviceMemory<float>& o_q, deviceMemory<float>& o_Aq);
 
@@ -176,54 +337,6 @@ public:
   void ZeroMean(deviceMemory<double> &o_q);
   void ZeroMean(deviceMemory<float> &o_q);
 };
-
-template <typename T>
-class ellipticStoppingCriteria : public stoppingCriteria_t<T> {
-
-  elliptic_t *elliptic;
-
-  occa::kernel *addBCKernel;
-  
-  occa::kernel strongVolumeResidualKernel;
-  occa::kernel stoppingCriteriaKernel;
-  occa::kernel cubatureH1ErrorKernel;
-  
-  deviceMemory<T> o_bL; // local rhs without any bcs
-  deviceMemory<T> o_qL;
-  deviceMemory<T> o_RnL;
-  deviceMemory<T> o_Rn;
-
-  deviceMemory<T> o_normRn;
-  deviceMemory<T> o_normFn;
-  memory<T> normRn;
-  memory<T> normFn;
-
-  dlong NblocksC = 0;
-  deviceMemory<T> o_errH1;
-  
-  dlong Ngall  = 0;
-  dlong blockSize = 0;
-  dlong Nblocks = 0;
-  
-  T eta = 0, eta_old = 0;
-  T *etaHistory = NULL;
-  int currentIteration = 0;
-public:
-  
-   ellipticStoppingCriteria<T>(elliptic_t *_elliptic, occa::kernel *addBCKernel);
-
-  T errorEstimate(deviceMemory<T> &o_q, deviceMemory<T> &o_r);
-
-  void reset();
-  
-  int stopTest(int iteration, deviceMemory<T> &o_q, deviceMemory<T> &o_r, T rdotr, T TOL);
-
-  void setLocalRHS(deviceMemory<T> &o_bLin);  
-};
-
-extern template class ellipticStoppingCriteria<float>;
-extern template class ellipticStoppingCriteria<double>;
-
 
 #endif
 

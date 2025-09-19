@@ -3,7 +3,7 @@
 The MIT License (MIT)
 
 Copyright (c) 2017-2022 Tim Warburton, Noel Chalmers, Jesse Chan, Ali Karakus
-
+1;95;0c
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights
@@ -158,7 +158,7 @@ void MGLevel::smoothJacobi(deviceMemory<pfloat>& o_r, deviceMemory<pfloat>& o_x,
 }
 
 void MGLevel::smoothChebyshev (deviceMemory<pfloat>& o_r, deviceMemory<pfloat>& o_x, bool xIsZero) {
-
+  
   const pfloat theta = 0.5*(lambda1+lambda0);
   const pfloat delta = 0.5*(lambda1-lambda0);
   const pfloat invTheta = 1.0/theta;
@@ -166,50 +166,54 @@ void MGLevel::smoothChebyshev (deviceMemory<pfloat>& o_r, deviceMemory<pfloat>& 
   pfloat rho_n = 1./sigma;
   pfloat rho_np1;
 
+  if(1){  
   deviceMemory<pfloat> o_res = platform.reserve<pfloat>(Ncols);
   deviceMemory<pfloat> o_Ad  = platform.reserve<pfloat>(Ncols);
   deviceMemory<pfloat> o_d   = platform.reserve<pfloat>(Ncols);
 
   linAlg_t& linAlg = platform.linAlg();
   pfloat one = 1.0, zero = 0;
-
+  
   if(xIsZero){ //skip the Ax if x is zero
     //res = S*r
-    linAlg.amxpy(elliptic.Ndofs, one, o_invDiagA, o_r, zero, o_res);
+    linAlg.amxpy(elliptic.Ndofs, one, o_invDiagA, o_r, zero, o_res, 0);
 
     //d = invTheta*res
-    linAlg.axpy(elliptic.Ndofs, invTheta, o_res, zero, o_d);
+    linAlg.axpy(elliptic.Ndofs, invTheta, o_res, zero, o_d, 0);
   } else {
     //res = S*(r-Ax)
     Operator(o_x,o_res);
-    linAlg.axpy(elliptic.Ndofs, one, o_r, -one, o_res);
+    linAlg.axpy(elliptic.Ndofs, one, o_r, -one, o_res, 0);
     linAlg.amx(elliptic.Ndofs, one, o_invDiagA, o_res);
 
     //d = invTheta*res
-    linAlg.axpy(elliptic.Ndofs, invTheta, o_res, zero, o_d);
+    linAlg.axpy(elliptic.Ndofs, invTheta, o_res, zero, o_d, 0);
   }
-
+  
   for (int k=0;k<ChebyshevIterations;k++) {
+
+    //printf("k = %d\n", k);
     //x_k+1 = x_k + d_k
     if (xIsZero&&(k==0))
-      linAlg.axpy(elliptic.Ndofs, one, o_d, zero, o_x);
+      linAlg.axpy(elliptic.Ndofs, one, o_d, zero, o_x, 0);
     else
-      linAlg.axpy(elliptic.Ndofs, one, o_d, one, o_x);
-
+      linAlg.axpy(elliptic.Ndofs, one, o_d, one, o_x, 0);
+ 
     //r_k+1 = r_k - SAd_k
     Operator(o_d,o_Ad);
-    linAlg.amxpy(elliptic.Ndofs, -one, o_invDiagA, o_Ad, one, o_res);
+    linAlg.amxpy(elliptic.Ndofs, -one, o_invDiagA, o_Ad, one, o_res, 0);
 
     rho_np1 = 1.0/(2.*sigma-rho_n);
     pfloat rhoDivDelta = 2.0*rho_np1/delta;
 
     //d_k+1 = rho_k+1*rho_k*d_k  + 2*rho_k+1*r_k+1/delta
-    linAlg.axpy(elliptic.Ndofs, rhoDivDelta, o_res, rho_np1*rho_n, o_d);
+    linAlg.axpy(elliptic.Ndofs, rhoDivDelta, o_res, rho_np1*rho_n, o_d, 0);
 
     rho_n = rho_np1;
   }
   //x_k+1 = x_k + d_k
-  linAlg.axpy(elliptic.Ndofs, one, o_d, one, o_x);
+  linAlg.axpy(elliptic.Ndofs, one, o_d, one, o_x, 0);
+  }
 }
 
 
@@ -251,6 +255,16 @@ MGLevel::MGLevel(elliptic_t& _elliptic,
 
   //build kernels
   properties_t kernelInfo = elliptic.platform.props();
+  properties_t kernelInfoAx = elliptic.mesh.props;
+  //properties_t kernelInfo = mesh.props;
+
+  kernelInfoAx["defines/" "p_Nggeo"]= 6;
+  kernelInfoAx["defines/" "p_G00ID"]= 0;
+  kernelInfoAx["defines/" "p_G01ID"]= 1;
+  kernelInfoAx["defines/" "p_G02ID"]= 2;
+  kernelInfoAx["defines/" "p_G11ID"]= 3;
+  kernelInfoAx["defines/" "p_G12ID"]= 4;
+  kernelInfoAx["defines/" "p_G22ID"]= 5;
 
   // set kernel name suffix
   std::string suffix = mesh.elementSuffix();
@@ -258,18 +272,24 @@ MGLevel::MGLevel(elliptic_t& _elliptic,
   std::string oklFilePrefix = DELLIPTIC "/okl/";
   std::string oklFileSuffix = ".okl";
 
-  std::string fileName, kernelName;
+  std::string fileName, kernelName, kernelNameDegree;
 
   kernelInfo["defines/" "dfloat"]= pfloatString; // TW
   kernelInfo["defines/" "dfloat4"]= std::string(pfloatString) + std::string("4");
-
   kernelInfo["defines/" "p_NqFine"]= mesh.N+1;
   kernelInfo["defines/" "p_NqCoarse"]= Nc+1;
-
   kernelInfo["defines/" "p_NpFine"]= mesh.Np;
   kernelInfo["defines/" "p_NpCoarse"]= NpCoarse;
 
-
+  kernelInfoAx["defines/" "dfloat"]= pfloatString; // TW
+  kernelInfoAx["defines/" "dfloat4"]= std::string(pfloatString) + std::string("4");
+  kernelInfoAx["defines/" "p_NqFine"]= mesh.N+1;
+  kernelInfoAx["defines/" "p_NqCoarse"]= Nc+1;
+  kernelInfoAx["defines/" "p_NpFine"]= mesh.Np;
+  kernelInfoAx["defines/" "p_NpCoarse"]= NpCoarse;
+  kernelInfoAx["defines/" "p_dim"]= mesh.dim;
+  kernelInfoAx["defines/" "p_Nverts"]= mesh.Nverts;
+  
   int blockMax = 256;
   if (elliptic.platform.device.mode() == "CUDA") blockMax = 512;
 
@@ -277,15 +297,68 @@ MGLevel::MGLevel(elliptic_t& _elliptic,
   int NblockVCoarse = std::max(1,blockMax/NpCoarse);
   kernelInfo["defines/" "p_NblockVFine"]= NblockVFine;
   kernelInfo["defines/" "p_NblockVCoarse"]= NblockVCoarse;
-
+  kernelInfoAx["defines/" "p_NblockVFine"]= NblockVFine;
+  kernelInfoAx["defines/" "p_NblockVCoarse"]= NblockVCoarse;
+  
   if (settings.compareSetting("DISCRETIZATION", "CONTINUOUS")) {
     fileName   = oklFilePrefix + "ellipticPreconCoarsen" + suffix + oklFileSuffix;
     kernelName = "ellipticPartialPreconCoarsen" + suffix;
-    partialCoarsenKernel = elliptic.platform.buildKernel(fileName, kernelName, kernelInfo);
+    partialCoarsenKernel = elliptic.platform.buildKernel(fileName, kernelName, kernelInfoAx);
+
+    fileName   = oklFilePrefix + "ellipticPreconCoarsen" + suffix + oklFileSuffix;
+    kernelName = "ellipticCoarsenGather" + suffix;
+    kernelNameDegree = kernelName + std::string("N") + std::to_string(mesh.N);
+    kernelInfoAx["defines/"+ kernelName] = kernelNameDegree;
+    coarsenGatherKernel = elliptic.platform.buildKernel(fileName, kernelNameDegree, kernelInfoAx);
 
     fileName   = oklFilePrefix + "ellipticPreconProlongate" + suffix + oklFileSuffix;
     kernelName = "ellipticPartialPreconProlongate" + suffix;
-    partialProlongateKernel = elliptic.platform.buildKernel(fileName, kernelName, kernelInfo);
+    kernelNameDegree = kernelName + std::string("N") + std::to_string(mesh.N);
+    kernelInfoAx["defines/"+ kernelName] = kernelNameDegree;
+    partialProlongateKernel = elliptic.platform.buildKernel(fileName, kernelNameDegree, kernelInfoAx);
+
+    fileName   = oklFilePrefix + "ellipticPreconProlongate" + suffix + oklFileSuffix;
+    kernelName = "ellipticfloatProlongateAxGather" + suffix;
+    kernelNameDegree = kernelName + std::string("N") + std::to_string(mesh.N);
+    kernelInfoAx["defines/"+ kernelName] = kernelNameDegree;
+    floatProlongateAxGatherKernel = elliptic.platform.buildKernel(fileName, kernelNameDegree, kernelInfoAx);
+
+    fileName   = oklFilePrefix + "ellipticPreconProlongate" + suffix + oklFileSuffix;
+    kernelName = "ellipticfloatProlongateAxTrilinearGather" + suffix;
+    kernelNameDegree = kernelName + std::string("N") + std::to_string(mesh.N);
+    kernelInfoAx["defines/"+ kernelName] = kernelNameDegree;
+    floatProlongateAxTrilinearGatherKernel = elliptic.platform.buildKernel(fileName, kernelNameDegree, kernelInfoAx);
+
+    fileName   = oklFilePrefix + "ellipticPreconProlongate" + suffix + oklFileSuffix;
+    kernelName = "ellipticfloatProlongateAxInterpGather" + suffix;
+    kernelNameDegree = kernelName + std::string("N") + std::to_string(mesh.N);
+    kernelInfoAx["defines/"+ kernelName] = kernelNameDegree;
+    floatProlongateAxInterpGatherKernel = elliptic.platform.buildKernel(fileName, kernelNameDegree, kernelInfoAx);
+
+    fileName   = oklFilePrefix + "ellipticPreconProlongate" + suffix + oklFileSuffix;
+    kernelName = "ellipticfloatProlongateAxGathernc" + suffix;
+    kernelNameDegree = kernelName + std::string("N") + std::to_string(mesh.N);
+    kernelInfoAx["defines/"+ kernelName] = kernelNameDegree;
+    floatProlongateAxGatherncKernel = elliptic.platform.buildKernel(fileName, kernelNameDegree, kernelInfoAx);
+
+    // half precision
+    fileName   = oklFilePrefix + "ellipticPreconCoarsen" + suffix + ".cu";
+    kernelName = "ellipticCoarsenGather" + suffix;
+    kernelNameDegree = kernelName + std::string("N") + std::to_string(mesh.N);
+    kernelInfoAx["defines/"+ kernelName] = kernelNameDegree;
+    kernelInfoAx["okl/enabled"] = false;
+    kernelInfoAx["defines/pfloat2hfloat"] = pfloat2hfloatString;
+    kernelInfoAx["defines/hfloat2pfloat"] = hfloat2pfloatString;
+
+    halfCoarsenGatherKernel = elliptic.platform.buildKernel(fileName, kernelNameDegree, kernelInfoAx);
+
+    fileName   = oklFilePrefix + "ellipticPreconProlongate" + suffix + ".cu";
+    kernelName = "ellipticProlongateAxTrilinearGather" + suffix;
+    kernelNameDegree = kernelName + std::string("N") + std::to_string(mesh.N);
+    kernelInfoAx["defines/"+ kernelName] = kernelNameDegree;
+    halfProlongateAxTrilinearGatherKernel = elliptic.platform.buildKernel(fileName, kernelNameDegree, kernelInfoAx);
+
+    
   } else { //IPDG
     fileName   = oklFilePrefix + "ellipticPreconCoarsen" + suffix + oklFileSuffix;
     kernelName = "ellipticPreconCoarsen" + suffix;
@@ -351,14 +424,22 @@ void MGLevel::SetupSmoother() {
   //set up the fine problem smoothing
   memory<dfloat> diagA   (Nrows);
   memory<pfloat> invDiagA(Nrows);
+  memory<hfloat> half_invDiagA(Nrows);
   elliptic.BuildOperatorDiagonal(diagA);
 
   for (dlong n=0;n<Nrows;n++) {
     invDiagA[n] = 1.0/diagA[n];
+    //#if defined(__NV_BFLOAT16__)
+    //half_invDiagA[n] = __float2bfloat16(1.0 / diagA[n]);
+    //#elif defined(__HALF__)
+    half_invDiagA[n] = __float2half(1.0 / diagA[n]);
+  //#else
+  // half_invDiagA[n] = 1.0 / diagA[n];
+  //#endif
   }
-
   o_invDiagA = elliptic.platform.malloc<pfloat>(invDiagA);
-
+  o_half_invDiagA = elliptic.platform.malloc<hfloat>(half_invDiagA);
+  
   if (elliptic.settings.compareSetting("MULTIGRID SMOOTHER","CHEBYSHEV")) {
     stype = CHEBYSHEV;
 
@@ -376,7 +457,7 @@ void MGLevel::SetupSmoother() {
     //estimate the max eigenvalue of S*A
     pfloat rho = maxEigSmoothAx();
 
-    //set the stabilty weight (jacobi-type interation)
+     //set the stabilty weight (jacobi-type interation)
     lambda0 = (4./3.)/rho;
 
     for (dlong n=0;n<Nrows;n++)
@@ -386,7 +467,6 @@ void MGLevel::SetupSmoother() {
     o_invDiagA.copyFrom(invDiagA);
   }
 }
-
 
 //------------------------------------------------------------------------
 //
@@ -426,6 +506,7 @@ pfloat MGLevel::maxEigSmoothAx(){
 
   // generate a random vector for initial basis vector
   for (dlong i=0;i<N;i++) Vx[i] = (pfloat) drand48();
+  //  for (dlong i=0;i<N;i++) Vx[i] = (pfloat) i/5;
 
   o_Vx.copyFrom(Vx); //copy to device
 
@@ -436,13 +517,14 @@ pfloat MGLevel::maxEigSmoothAx(){
   for(int j=0; j<k; j++){
     // v[j+1] = invD*(A*v[j])
     Operator(o_V[j],o_AVx);
+    
+    linAlg.set<pfloat>(N, (pfloat)0, o_V[j+1]);
     linAlg.amxpy(N, one, o_invDiagA, o_AVx, zero, o_V[j+1]);
 
     // modified Gram-Schmidth
     for(int i=0; i<=j; i++){
       // H(i,j) = v[i]'*A*v[j]
       pfloat hij =  linAlg.innerProd(N, o_V[i], o_V[j+1], mesh.comm);
-
       // v[j+1] = v[j+1] - hij*v[i]
       linAlg.axpy(N, -hij, o_V[i], one, o_V[j+1]);
 

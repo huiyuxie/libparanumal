@@ -86,6 +86,7 @@ void mesh_t::GeometricFactorsHex3D(){
 
   /* number of second order geometric factors */
   ggeo.malloc(Nelements*Nggeo*Np);
+  ggeoNoW.malloc(Nelements*Nggeo*Np);
 
   wJ.malloc(Nelements*Np);
 
@@ -166,6 +167,13 @@ void mesh_t::GeometricFactorsHex3D(){
           ggeo[Nggeo*Np*e + n + Np*G11ID] = JW*(sx*sx + sy*sy + sz*sz);
           ggeo[Nggeo*Np*e + n + Np*G12ID] = JW*(sx*tx + sy*ty + sz*tz);
           ggeo[Nggeo*Np*e + n + Np*G22ID] = JW*(tx*tx + ty*ty + tz*tz);
+
+          ggeoNoW[Nggeo*Np*e + n + Np*G00ID] = J*(rx*rx + ry*ry + rz*rz);
+          ggeoNoW[Nggeo*Np*e + n + Np*G01ID] = J*(rx*sx + ry*sy + rz*sz);
+          ggeoNoW[Nggeo*Np*e + n + Np*G02ID] = J*(rx*tx + ry*ty + rz*tz);
+          ggeoNoW[Nggeo*Np*e + n + Np*G11ID] = J*(sx*sx + sy*sy + sz*sz);
+          ggeoNoW[Nggeo*Np*e + n + Np*G12ID] = J*(sx*tx + sy*ty + sz*tz);
+          ggeoNoW[Nggeo*Np*e + n + Np*G22ID] = J*(tx*tx + ty*ty + tz*tz);
 
           wJ[Np*e + n] = JW;
         }

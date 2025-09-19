@@ -42,11 +42,17 @@ void linAlg_t::Setup(platform_t *_platform) {
   kernelInfoFloat["defines/init_dfloat_min"] =  std::numeric_limits<float>::max();
   kernelInfoFloat["defines/init_dfloat_max"] = -std::numeric_limits<float>::max();
   kernelInfoFloat["defines/dfloat"]  = "float";
+  kernelInfoFloat["defines/" "ncLoad"]=  "__ldcs";
+  kernelInfoFloat["defines/" "ncStore"] = "__stcs";
+
 
   kernelInfoDouble = kernelInfoFloat;
   kernelInfoDouble["defines/init_dfloat_min"] =  std::numeric_limits<double>::max();
   kernelInfoDouble["defines/init_dfloat_max"] = -std::numeric_limits<double>::max();
   kernelInfoDouble["defines/dfloat"]  = "double";
+  kernelInfoDouble["defines/" "ncLoad"]=  "__ldcs";
+  kernelInfoDouble["defines/" "ncStore"] = "__stcs";
+
 }
 
 //initialize list of kernels
@@ -64,7 +70,17 @@ void linAlg_t::InitKernels(std::vector<std::string> kernels) {
                                                 "linAlgSet.okl",
                                                 "set",
                                                 kernelInfoDouble);
-
+      }
+    } else if (name=="setnc") {
+      if (setncKernelFloat.isInitialized()==false){
+	setncKernelFloat = platform->buildKernel(LINALG_DIR "/okl/"
+					       "linAlgSet.okl",
+					       "setnc",
+					       kernelInfoFloat);
+	setncKernelDouble = platform->buildKernel(LINALG_DIR "/okl/"
+						"linAlgSet.okl",
+						"setnc",
+						kernelInfoDouble);
       }
     } else if (name=="add") {
       if (addKernelFloat.isInitialized()==false){
@@ -100,6 +116,17 @@ void linAlg_t::InitKernels(std::vector<std::string> kernels) {
                                                  "axpy",
                                                  kernelInfoDouble);
       }
+    } else if (name=="axpync") {
+      if (axpyncKernelFloat.isInitialized()==false){
+        axpyncKernelFloat = platform->buildKernel(LINALG_DIR "/okl/"
+                                                "linAlgAXPY.okl",
+                                                "axpync",
+                                                kernelInfoFloat);
+        axpyncKernelDouble = platform->buildKernel(LINALG_DIR "/okl/"
+                                                 "linAlgAXPY.okl",
+                                                 "axpync",
+                                                 kernelInfoDouble);
+      }
     } else if (name=="zaxpy") {
       if (zaxpyKernelFloat.isInitialized()==false){
         zaxpyKernelFloat = platform->buildKernel(LINALG_DIR "/okl/"
@@ -109,6 +136,116 @@ void linAlg_t::InitKernels(std::vector<std::string> kernels) {
         zaxpyKernelDouble = platform->buildKernel(LINALG_DIR "/okl/"
                                                   "linAlgAXPY.okl",
                                                   "zaxpy",
+                                                  kernelInfoDouble);
+      }
+    } else if (name=="updateCheby1") {
+      if (updateCheby1KernelFloat.isInitialized()==false){
+        updateCheby1KernelFloat = platform->buildKernel(LINALG_DIR "/okl/"
+                                                 "linAlgUpdateCheby.okl",
+                                                 "updateCheby1",
+                                                 kernelInfoFloat);
+        updateCheby1KernelDouble = platform->buildKernel(LINALG_DIR "/okl/"
+                                                  "linAlgUpdateCheby.okl",
+                                                  "updateCheby1",
+                                                  kernelInfoDouble);
+      }
+    } else if (name=="updateCheby1nc") {
+      if (updateCheby1ncKernelFloat.isInitialized()==false){
+        updateCheby1ncKernelFloat = platform->buildKernel(LINALG_DIR "/okl/"
+                                                 "linAlgUpdateCheby.okl",
+                                                 "updateCheby1nc",
+                                                 kernelInfoFloat);
+        updateCheby1ncKernelDouble = platform->buildKernel(LINALG_DIR "/okl/"
+                                                  "linAlgUpdateCheby.okl",
+                                                  "updateCheby1nc",
+                                                  kernelInfoDouble);
+      }
+    } else if (name=="updateCheby2") {
+      if (updateCheby2KernelFloat.isInitialized()==false){
+        updateCheby2KernelFloat = platform->buildKernel(LINALG_DIR "/okl/"
+                                                 "linAlgUpdateCheby.okl",
+                                                 "updateCheby2",
+                                                 kernelInfoFloat);
+        updateCheby1KernelDouble = platform->buildKernel(LINALG_DIR "/okl/"
+                                                  "linAlgUpdateCheby.okl",
+                                                  "updateCheby2",
+                                                  kernelInfoDouble);
+      }
+    } else if (name=="updateCheby2nc") {
+      if (updateCheby2ncKernelFloat.isInitialized()==false){
+        updateCheby2ncKernelFloat = platform->buildKernel(LINALG_DIR "/okl/"
+                                                 "linAlgUpdateCheby.okl",
+                                                 "updateCheby2nc",
+                                                 kernelInfoFloat);
+        updateCheby2ncKernelDouble = platform->buildKernel(LINALG_DIR "/okl/"
+                                                  "linAlgUpdateCheby.okl",
+                                                  "updateCheby2nc",
+                                                  kernelInfoDouble);
+      }
+    } else if (name=="updateCheby3") {
+      if (updateCheby3KernelFloat.isInitialized()==false){
+        updateCheby3KernelFloat = platform->buildKernel(LINALG_DIR "/okl/"
+                                                 "linAlgUpdateCheby.okl",
+                                                 "updateCheby3",
+                                                 kernelInfoFloat);
+        updateCheby3KernelDouble = platform->buildKernel(LINALG_DIR "/okl/"
+                                                  "linAlgUpdateCheby.okl",
+                                                  "updateCheby3",
+                                                  kernelInfoDouble);
+      }
+    } else if (name=="updateCheby3nc") {
+      if (updateCheby3ncKernelFloat.isInitialized()==false){
+        updateCheby3ncKernelFloat = platform->buildKernel(LINALG_DIR "/okl/"
+                                                 "linAlgUpdateCheby.okl",
+                                                 "updateCheby3nc",
+                                                 kernelInfoFloat);
+        updateCheby3ncKernelDouble = platform->buildKernel(LINALG_DIR "/okl/"
+                                                  "linAlgUpdateCheby.okl",
+                                                  "updateCheby3nc",
+                                                  kernelInfoDouble);
+      }
+    } else if (name=="updateCheby4") {
+      if (updateCheby4KernelFloat.isInitialized()==false){
+        updateCheby4KernelFloat = platform->buildKernel(LINALG_DIR "/okl/"
+                                                 "linAlgUpdateCheby.okl",
+                                                 "updateCheby4",
+                                                 kernelInfoFloat);
+        updateCheby4KernelDouble = platform->buildKernel(LINALG_DIR "/okl/"
+                                                  "linAlgUpdateCheby.okl",
+                                                  "updateCheby4",
+                                                  kernelInfoDouble);
+      }
+    } else if (name=="updateCheby4nc") {
+      if (updateCheby4ncKernelFloat.isInitialized()==false){
+        updateCheby4ncKernelFloat = platform->buildKernel(LINALG_DIR "/okl/"
+                                                 "linAlgUpdateCheby.okl",
+                                                 "updateCheby4nc",
+                                                 kernelInfoFloat);
+        updateCheby4ncKernelDouble = platform->buildKernel(LINALG_DIR "/okl/"
+                                                  "linAlgUpdateCheby.okl",
+                                                  "updateCheby4nc",
+                                                  kernelInfoDouble);
+      }
+    } else if (name=="updateCheby5") {
+      if (updateCheby5KernelFloat.isInitialized()==false){
+        updateCheby5KernelFloat = platform->buildKernel(LINALG_DIR "/okl/"
+                                                 "linAlgUpdateCheby.okl",
+                                                 "updateCheby5",
+                                                 kernelInfoFloat);
+        updateCheby5KernelDouble = platform->buildKernel(LINALG_DIR "/okl/"
+                                                  "linAlgUpdateCheby.okl",
+                                                  "updateCheby5",
+                                                  kernelInfoDouble);
+      }
+    } else if (name=="updateCheby5nc") {
+      if (updateCheby5ncKernelFloat.isInitialized()==false){
+        updateCheby5ncKernelFloat = platform->buildKernel(LINALG_DIR "/okl/"
+                                                 "linAlgUpdateCheby.okl",
+                                                 "updateCheby5nc",
+                                                 kernelInfoFloat);
+        updateCheby5ncKernelDouble = platform->buildKernel(LINALG_DIR "/okl/"
+                                                  "linAlgUpdateCheby.okl",
+                                                  "updateCheby5nc",
                                                   kernelInfoDouble);
       }
     } else if (name=="amx") {
@@ -123,6 +260,18 @@ void linAlg_t::InitKernels(std::vector<std::string> kernels) {
                                                 "amx",
                                                 kernelInfoDouble);
       }
+    } else if (name=="amxnc") {
+      if (amxncKernelFloat.isInitialized()==false){
+        amxncKernelFloat = platform->buildKernel(LINALG_DIR "/okl/"
+                                               "linAlgAMXPY.okl",
+                                               "amxnc",
+                                               kernelInfoFloat);
+
+        amxncKernelDouble = platform->buildKernel(LINALG_DIR "/okl/"
+                                                "linAlgAMXPY.okl",
+                                                "amxnc",
+                                                kernelInfoDouble);
+      }
 
     } else if (name=="amxpy") {
       if (amxpyKernelFloat.isInitialized()==false){
@@ -133,6 +282,17 @@ void linAlg_t::InitKernels(std::vector<std::string> kernels) {
         amxpyKernelDouble = platform->buildKernel(LINALG_DIR "/okl/"
                                                   "linAlgAMXPY.okl",
                                                   "amxpy",
+                                                  kernelInfoDouble);
+      }
+    } else if (name=="amxpync") {
+      if (amxpyncKernelFloat.isInitialized()==false){
+        amxpyncKernelFloat = platform->buildKernel(LINALG_DIR "/okl/"
+                                                 "linAlgAMXPY.okl",
+                                                 "amxpync",
+                                                 kernelInfoFloat);
+        amxpyncKernelDouble = platform->buildKernel(LINALG_DIR "/okl/"
+                                                  "linAlgAMXPY.okl",
+                                                  "amxpync",
                                                   kernelInfoDouble);
       }
     } else if (name=="zamxpy") {
@@ -245,6 +405,17 @@ void linAlg_t::InitKernels(std::vector<std::string> kernels) {
                                                       "innerProd",
                                                       kernelInfoDouble);
       }
+    } else if (name=="innerProdnc") {
+      if (innerProdncKernelFloat.isInitialized()==false) {
+        innerProdncKernelFloat = platform->buildKernel(LINALG_DIR "/okl/"
+                                                     "linAlgInnerProd.okl",
+                                                     "innerProdnc",
+                                                     kernelInfoFloat);
+        innerProdncKernelDouble = platform->buildKernel(LINALG_DIR "/okl/"
+                                                      "linAlgInnerProd.okl",
+                                                      "innerProdnc",
+                                                      kernelInfoDouble);
+      }
     } else if (name=="weightedInnerProd") {
       if (weightedInnerProdKernelFloat.isInitialized()==false) {
         weightedInnerProdKernelFloat = platform->buildKernel(LINALG_DIR "/okl/"
@@ -263,6 +434,8 @@ void linAlg_t::InitKernels(std::vector<std::string> kernels) {
       kernelInfoType["defines/" "p_blockSize"] = blocksize;
       kernelInfoType["defines/dfloat"]  = dfloatString;
       kernelInfoType["defines/pfloat"]  = pfloatString;
+      kernelInfoType["defines/" "ncLoad"]=  "__ldcs";
+      kernelInfoType["defines/" "ncStore"] = "__stcs";
 
       if(d2pKernel.isInitialized()==false){
         d2pKernel = platform->buildKernel(LINALG_DIR "/okl/"

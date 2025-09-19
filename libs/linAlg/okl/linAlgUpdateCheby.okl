@@ -1,0 +1,249 @@
+/*
+
+The MIT License (MIT)
+
+Copyright (c) 2017-2022 Tim Warburton, Noel Chalmers, Jesse Chan, Ali Karakus
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+*/
+
+// y = S * (alpha*x + beta*y)
+@kernel void updateCheby1(const dlong N,
+                  const dfloat alpha,
+                  const dfloat beta,
+                  @restrict const dfloat *x,
+                  @restrict const dfloat *S,
+                  @restrict dfloat *y, 
+                  int reverse){
+
+  for(dlong m=0;m<N;++m;@tile(p_blockSize,@outer,@inner)){
+    dlong n = reverse? N-1-m: m;
+    //    y[n] = (alpha * x[n] + beta * y[n]);
+    y[n] = S[n] * (alpha * x[n] + beta * y[n]);
+  }
+}
+
+@kernel void updateCheby1nc(const dlong N,
+                  const dfloat alpha,
+                  const dfloat beta,
+                  @restrict const dfloat *x,
+                  @restrict const dfloat *S,
+                  @restrict dfloat *y, 
+                  int reverse){
+
+  for(dlong m=0;m<N;++m;@tile(p_blockSize,@outer,@inner)){
+    dlong n = reverse? N-1-m: m;
+    dfloat xn = ncLoad(x + n);
+    dfloat Sn = ncLoad(S + n);
+    xn = alpha * xn + beta*y[n];
+    y[n] = Sn * xn;
+  }
+}
+
+
+
+// x = x0 + alpha * invDiagA * (r - Ax);
+@kernel void updateCheby2(const dlong N,
+                  const dfloat alpha,
+                  @restrict const dfloat *r,
+                  @restrict const dfloat *invDiagA,
+                  @restrict const dfloat *Ax,
+                  @restrict const dfloat *x0,
+                  @restrict dfloat *x, 
+                  int reverse){
+
+  for(dlong m=0;m<N;++m;@tile(p_blockSize,@outer,@inner)){
+    dlong n = reverse? N-1-m: m;
+
+    dfloat rn = r[n] - Ax[n];
+    dfloat xn = x0[n];
+    rn = invDiagA[n] * rn;
+    x[n] =  xn + alpha * rn ;
+  }
+}
+
+
+// x = x0 + alpha * invDiagA * (r - Ax);
+@kernel void updateCheby2nc(const dlong N,
+                  const dfloat alpha,
+                  @restrict const dfloat *r,
+                  @restrict const dfloat *invDiagA,
+                  @restrict const dfloat *Ax,
+                  @restrict const dfloat *x0,
+                  @restrict dfloat *x, 
+                  int reverse){
+
+  for(dlong m=0;m<N;++m;@tile(p_blockSize,@outer,@inner)){
+    dlong n = reverse? N-1-m: m;
+
+    dfloat rn = ncLoad(r + n);
+    dfloat invDiagAn = ncLoad(invDiagA + n);
+    dfloat Axn = ncLoad(Ax + n);
+    dfloat xn = ncLoad(x0 + n);
+    rn = invDiagAn * (rn - Axn);
+    x[n] =  xn + alpha * rn ;
+  }
+}
+
+
+// x2 = x1 + a1 * [a0*(x1 - x0) + d0 * invDiagA * (r-Ax)]
+@kernel void updateCheby3(const dlong N,
+                  const dfloat a1,
+		  const dfloat a0,
+		  const dfloat d0,
+	          @restrict const dfloat *Ax,
+		  @restrict const dfloat *invDiagA,
+	          @restrict const dfloat *r,
+        	  @restrict const dfloat *x0,
+                  @restrict const dfloat *x1,
+                  @restrict dfloat *x2, 
+                  int reverse){
+
+  for(dlong m=0;m<N;++m;@tile(p_blockSize,@outer,@inner)){
+    dlong n = reverse? N-1-m: m;
+
+    dfloat rn = r[n];
+    dfloat invDiagAn = invDiagA[n];
+    dfloat Axn = Ax[n];
+    dfloat x0n = x0[n];
+    dfloat x1n = x1[n];
+    
+    rn =  invDiagAn * (rn - Axn);
+    x0n = a0 * (x1n - x0n);
+    Axn = x0n + d0 * rn;
+
+    x2[n] = x1n + a1 *Axn;
+   }
+}
+
+
+
+// x2 = x1 + a1 * [a0*(x1 - x0) + d0 * invDiagA * (r-Ax)]
+@kernel void updateCheby3nc(const dlong N,
+                  const dfloat a1,
+		  const dfloat a0,
+		  const dfloat d0,
+	          @restrict const dfloat *Ax,
+		  @restrict const dfloat *invDiagA,
+	          @restrict const dfloat *r,
+        	  @restrict const dfloat *x0,
+                  @restrict const dfloat *x1,
+                  @restrict dfloat *x2, 
+                  int reverse){
+
+  for(dlong m=0;m<N;++m;@tile(p_blockSize,@outer,@inner)){
+    dlong n = reverse? N-1-m: m;
+
+    dfloat rn = ncLoad(r + n);
+    dfloat invDiagAn = ncLoad(invDiagA + n);
+    dfloat Axn = ncLoad(Ax + n);
+    dfloat x0n = ncLoad(x0 + n);
+    dfloat x1n = ncLoad(x1 + n);
+    
+    rn = rn -  invDiagAn *Axn;
+    x0n = a0 * (x1n - x0n);
+    Axn = x0n + d0 * rn;
+    
+    x2[n] =  x1n + a1 * Axn ;
+  }
+}
+
+
+// y = c1*x1 + c2*x2 + c3*S*x3
+@kernel void updateCheby4(const dlong N,
+			  const dfloat c1,
+			  const dfloat c2,
+			  const dfloat c3,
+			  @restrict dfloat *x1,
+			  @restrict const dfloat *x2,
+			  @restrict const dfloat *x3,
+			  @restrict dfloat *y,
+			  int reverse){
+  for(dlong m=0;m<N;++m;@tile(p_blockSize,@outer,@inner)){
+    dlong n = reverse? N-1-m: m;
+    dfloat tmp = c1*x1[n] + c2*x2[n];
+    y[n] = tmp  + c3*x3[n];
+    x1[n] = 0.f;
+  }
+}
+
+
+// y = c1*x1 + c2*x2 + c3*S*x3
+@kernel void updateCheby4nc(const dlong N,
+			    const dfloat c1,
+			    const dfloat c2,
+			    const dfloat c3,
+			    @restrict dfloat *x1,
+			    @restrict const dfloat *x2,
+			    @restrict const dfloat *x3,
+			    @restrict dfloat *y,
+			    int reverse){
+  for(dlong m=0;m<N;++m;@tile(p_blockSize,@outer,@inner)){
+    dlong n = reverse? N-1-m: m;
+    dfloat x1n = ncLoad(x1 + n);
+    dfloat x2n = ncLoad(x2 + n);
+    dfloat x3n = ncLoad(x3 + n);
+    x2n = c1*x1n + c2*x2n;
+    //    ncStore(x1+n, 0.f);
+    x1[n] = 0.f;
+    y[n] = x2n + c3*x3n;
+  }
+}
+
+// y = x0 + c1*x1 + c2*x2 + c3*S*x3
+@kernel void updateCheby5(const dlong N,
+			  const dfloat c1,
+			  const dfloat c2,
+			  const dfloat c3,
+			  @restrict const dfloat *x0,
+			  @restrict const dfloat *x1,
+			  @restrict const dfloat *x2,
+			  @restrict const dfloat *x3,
+			  @restrict dfloat *y,
+			  int reverse){
+  for(dlong m=0;m<N;++m;@tile(p_blockSize,@outer,@inner)){
+    dlong n = reverse? N-1-m: m;
+    dfloat tmp =  c1*x1[n]  + c2*x2[n]  ;
+    y[n] = x0[n] + tmp + c3*x3[n];
+  }
+}
+
+
+// y = x0 + c1*x1 + c2*x2 + c3*S*x3
+@kernel void updateCheby5nc(const dlong N,
+			    const dfloat c1,
+			    const dfloat c2,
+			    const dfloat c3,
+			    @restrict const dfloat *x0,
+			    @restrict const dfloat *x1,
+			    @restrict const dfloat *x2,
+			    @restrict const dfloat *x3,
+			    @restrict dfloat *y,
+			    int reverse){
+  for(dlong m=0;m<N;++m;@tile(p_blockSize,@outer,@inner)){
+    dlong n = reverse? N-1-m: m;
+    dfloat x0n = ncLoad(x0 + n);
+    dfloat x1n = ncLoad(x1 + n);
+    dfloat x2n = ncLoad(x2 + n);
+    dfloat x3n = ncLoad(x3 + n);
+    x2n = c1*x1n + c2*x2n;
+    y[n] = x0n + x2n + c3*x3n;
+  }
+}

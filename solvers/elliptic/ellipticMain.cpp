@@ -72,7 +72,6 @@ int main(int argc, char **argv){
 
     // run
     elliptic.Run();
-//    elliptic.WaveSolver();
   }
 
   // close down MPI
