@@ -1,0 +1,16 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build-wave-debug",
+      "type": "shell",
+      "command": "make",
+      "args": ["-f", "makefile.debug"],
+      "options": {
+        "cwd": "${workspaceFolder}/solvers/wave"
+      },
+      "problemMatcher": "$gcc",
+      "group": { "kind": "build", "isDefault": true }
+    }
+  ]
+}

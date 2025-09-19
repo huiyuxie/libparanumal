@@ -1,0 +1,27 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "waveMain (gdb)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/solvers/wave/waveMain",
+      "args": ["setups/testWaveQuad2D.rc"],
+      "cwd": "${workspaceFolder}/solvers/wave",
+      "stopAtEntry": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "setupCommands": [
+        { "description": "Enable pretty printing", 
+          "text": "-enable-pretty-printing", 
+          "ignoreFailures": true }
+      ],
+      "environment": [
+        { "name": "LD_LIBRARY_PATH", 
+          "value": "/usr/local/cuda/lib64:${env:LD_LIBRARY_PATH}" }
+      ],
+      "externalConsole": false,
+      "preLaunchTask": "build-wave-debug"
+    }
+  ]
+}
